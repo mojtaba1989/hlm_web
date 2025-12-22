@@ -1,0 +1,5 @@
+/.vscode
+/frontend/node_modules
+/tests
+/.lgd*
+/backend/__pycache__
