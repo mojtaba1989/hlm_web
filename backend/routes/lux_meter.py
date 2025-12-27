@@ -8,8 +8,8 @@ import random
 router = APIRouter()
 
 def save_sensor_row(row):
-    if utils.writer:
-        utils.writer.writerow(row)
+    if utils.core_.writer:
+        utils.core_.writer.writerow(row)
 
 def number_generator():
     while True:
@@ -30,7 +30,7 @@ def sensor_loop():
             "s3": random.random()+2,
             "s4": random.random()+3,
         }
-        if utils.recording:
+        if utils.core_.recording:
             save_sensor_row(data)
         yield f"data: {json.dumps(data)}\n\n"
         time.sleep(utils.SPS_INVERSE)

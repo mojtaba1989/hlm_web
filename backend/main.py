@@ -7,9 +7,6 @@ import os
 from routes import lux_meter, camera_feed, recorder
 
 
-DATABASE = "/home/dev/DATABASE"
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """

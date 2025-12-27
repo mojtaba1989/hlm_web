@@ -3,3 +3,4 @@
 /tests
 /.lgd*
 /backend/__pycache__
+/backend/routes/__pycache__

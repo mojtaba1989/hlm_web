@@ -19,8 +19,8 @@ def camera_loop():
             utils.latest_frame['frame_id'] = frame_id
             utils.latest_frame['ts'] = ts
 
-        if utils.recording and utils.video_writer:
-            utils.video_writer.write(frame)
+        if utils.core_.recording and utils.core_.video_writer:
+            utils.core_.video_writer.write(frame)
 
         yield frame
 
