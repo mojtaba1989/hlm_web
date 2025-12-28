@@ -4,3 +4,6 @@
 /.lgd*
 /backend/__pycache__
 /backend/routes/__pycache__
+
+# git rm -r --cached . -f
+# git add .

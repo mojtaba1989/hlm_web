@@ -10,6 +10,7 @@ from copy import deepcopy
 import csv
 import cv2
 import inspect
+import queue
 
 LOG_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -48,6 +49,7 @@ def safe_call(method, *args, label=None, default=None, **kwargs):
         ) or None
         if logger is None:
             return default
+        
         frame = inspect.currentframe().f_back
         caller_func = frame.f_code.co_name
         caller_file = frame.f_code.co_filename
@@ -64,17 +66,35 @@ def safe_call(method, *args, label=None, default=None, **kwargs):
         )
 
         return default
+    
+class QueueLogHandler(logging.Handler):
+    def __init__(self, log_queue):
+        super().__init__()
+        self.log_queue = log_queue
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.log_queue.put(msg)
 
 class LoggerManager:
     def __init__(self):
         self.logger = logging.getLogger("headLightMeter")
         self.formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
-        self.logger.setLevel(logging.DEBUG)
-        if not any(isinstance(h, logging.StreamHandler) for h in self.logger.handlers):
-            console_handler = logging.StreamHandler(sys.stdout)
-            console_handler.setLevel(logging.ERROR)
-            console_handler.setFormatter(self.formatter)
-            self.logger.addHandler(console_handler)
+        self.handeler_types = {
+            "file": logging.FileHandler,
+            "queue": QueueLogHandler,
+            "console": logging.StreamHandler
+        }
+        self.setup_console_logger()
+        self.setup_weblog_logger()
+
+    def setup_console_logger(self):
+        if any(isinstance(h, logging.StreamHandler) for h in self.logger.handlers):
+            return
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.DEBUG)
+        console_handler.setFormatter(self.formatter)
+        self.logger.addHandler(console_handler)
 
     def setup_file_logger(self, config : dict, file_name : str):
         for handler in self.logger.handlers[:]:
@@ -89,10 +109,31 @@ class LoggerManager:
             self.file_handler.setFormatter(self.formatter)
             self.logger.addHandler(self.file_handler)
 
-    def set_level(self, level):
-        self.logger.setLevel(LOG_LEVELS.get(level.upper(), logging.INFO))
-        for handler in self.logger.handlers:
-            handler.setLevel(LOG_LEVELS.get(level.upper(), logging.INFO))
+    def setup_weblog_logger(self):
+        for handler in self.logger.handlers[:]:
+            if isinstance(handler, QueueLogHandler):
+                self.logger.removeHandler(handler)
+                handler.close()
+                
+        self.log_queue = queue.Queue()
+        self.queue_handler = QueueLogHandler(self.log_queue)
+        self.queue_handler.setLevel(logging.INFO)
+        self.queue_handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.queue_handler)
+
+    def set_level(self, level, target="all"):
+        if target == "all": 
+            for handler in self.logger.handlers:
+                handler.setLevel(LOG_LEVELS.get(level.upper(), logging.INFO))
+            return True 
+        else:
+            instance = self.handeler_types.get(target, None)
+            if instance is not None:
+                for handler in self.logger.handlers:
+                    if isinstance(handler, instance):
+                        handler.setLevel(LOG_LEVELS.get(level.upper(), logging.INFO))
+                        return True
+            return False       
 
 
 class FileManager:
@@ -229,9 +270,9 @@ class Core:
     @try_except
     def close_recording(self):
         self.recording = False
-        safe_call(self.video_writer.release)
+        safe_call(self.video_writer.release, label="release video writer")
         self.writer = None
-        safe_call(self.csv_file.close)
+        safe_call(self.csv_file.close, label="close csv file")
         with open(self.metafile, "w") as f:
             json.dump(self.metadata, f, indent=2)
         return True
