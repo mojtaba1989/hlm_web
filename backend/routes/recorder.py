@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 import utils
-import cv2, csv
 
 router = APIRouter()
 

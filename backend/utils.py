@@ -11,6 +11,7 @@ import csv
 import cv2
 import inspect
 import queue
+import time
 
 LOG_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -18,6 +19,11 @@ LOG_LEVELS = {
     'WARNING': logging.WARNING,
     'ERROR': logging.ERROR,
     'CRITICAL': logging.CRITICAL
+}
+
+VIDEO_INFO = {
+    "frame_id": None,
+    "ts": None
 }
 
 def try_except(func):
@@ -220,13 +226,32 @@ class ConfigManager:
         self._undo_stack.clear()
         self._redo_stack.clear()
 
-    
-    
+class CounterManager:
+    def __init__(self):
+        self.counter = VIDEO_INFO
+        self.lock = threading.Lock()
+        self.refrence = itertools.count()
+
+    def update(self):
+        with self.lock:
+            self.counter["frame_id"] = next(self.refrence)
+            self.counter["ts"] = time.time()
+
+    def get(self):
+        with self.lock:
+            return self.counter['frame_id'], self.counter['ts']
+        
+    def reset(self):
+        with self.lock:
+            self.counter = VIDEO_INFO
+            self.refrence = itertools.count()
+
 class Core:
     def __init__(self):
         self.file_manager = FileManager()
         self.logger = LoggerManager()
-        self.config_manager = ConfigManager({})
+        self.config = ConfigManager({})
+        self.counter = CounterManager()
         self.recording = False
         self.video_writer = None
         self.writer = None
@@ -246,7 +271,7 @@ class Core:
             "log": os.path.join(path, 'log'),
             "csv": os.path.join(path, 'data.csv'),
             "video": os.path.join(path, 'camera_feed.mp4'),
-            "config": self.config_manager.config
+            "config": self.config.config
         }
         self.metafile = os.path.join(path, 'metadata.json')
     # TODO: check with config
@@ -265,6 +290,7 @@ class Core:
             30,
             (640, 480)
         )
+        self.counter.reset()
         return True
     
     @try_except
@@ -284,10 +310,7 @@ core_ = Core()
 FPS_INVERSE = 1/30
 SPS_INVERSE = 1/100
 
-latest_frame = {
-    "frame_id": None,
-    "ts": None
-}
+
 
 lock = threading.Lock()
 
