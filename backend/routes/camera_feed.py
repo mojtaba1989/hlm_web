@@ -89,6 +89,7 @@ def mjpeg_stream():
             buffer.tobytes() +
             b"\r\n"
         )
+        time.sleep(utils.FPS_INVERSE)
 
 @router.get("/stream")
 def video_feed():

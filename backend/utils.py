@@ -287,7 +287,7 @@ class Core:
         self.video_writer = cv2.VideoWriter(
             self.metadata["video"],
             cv2.VideoWriter_fourcc(*"mp4v"),
-            30,
+            int(FPS),
             (640, 480)
         )
         self.counter.reset()
@@ -307,7 +307,8 @@ frame_counter = itertools.count()
 core_ = Core()
 
 
-FPS_INVERSE = 1/30
+FPS = 30
+FPS_INVERSE = 1/FPS
 SPS_INVERSE = 1/100
 
 

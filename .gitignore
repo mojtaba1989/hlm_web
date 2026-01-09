@@ -1,4 +1,4 @@
-/.vscode
+# /.vscode
 /frontend/node_modules
 /tests
 /.lgd*
