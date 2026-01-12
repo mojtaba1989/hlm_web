@@ -1,16 +1,36 @@
-function WebcamView({enabled}) {
-  return (
-    <div>
-        <h2>Live Webcam</h2>
-        {enabled && (
-            <img
-            src="/api/camera_feed/stream"
-            alt="Webcam"
-            style={{ width: "640px", border: "1px solid black" }}
-            />
-        )}
-    </div>
-  );
+import { useEffect, useRef } from "react";
+
+function WebcamView({ enabled }) {
+  const videoRef = useRef();
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const mediaSource = new MediaSource();
+    videoRef.current.src = URL.createObjectURL(mediaSource);
+
+    mediaSource.addEventListener("sourceopen", () => {
+      const buffer = mediaSource.addSourceBuffer(
+        'video/mp4; codecs="avc1.42E01E"'
+      );
+
+      const ws = new WebSocket("ws://localhost:8000/api/camera_feed/ws");
+      ws.binaryType = "arraybuffer";
+
+      ws.onmessage = e => {
+        buffer.appendBuffer(new Uint8Array(e.data));
+      };
+
+      return () => {
+        ws.close();
+        mediaSource.endOfStream();
+      };
+    });
+
+  }, [enabled]);
+
+  return <video ref={videoRef} autoPlay playsInline />;
 }
+
 
 export default WebcamView

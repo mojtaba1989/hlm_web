@@ -98,7 +98,7 @@ class LoggerManager:
         if any(isinstance(h, logging.StreamHandler) for h in self.logger.handlers):
             return
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.DEBUG)
+        console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(self.formatter)
         self.logger.addHandler(console_handler)
 

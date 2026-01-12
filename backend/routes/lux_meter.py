@@ -5,10 +5,7 @@ import time
 import json
 import random
 
-
-
 router = APIRouter()
-
 
 def save_sensor_row(row):
     if utils.core_.writer:
