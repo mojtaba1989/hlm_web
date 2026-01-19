@@ -7,48 +7,56 @@ import LuxSensors from "./components/LuxSensors";
 function LiveFeed() {
     const [streaming, setStreaming] = useState(false);
     const [recording, setRecording] = useState(false);
-    const [enabled, setEnabled] = useState(false);
+    const [disabled, setDisabled] = useState(false);
 
     const toggleRecording = async () => {
         try {
+            setDisabled(true);
+            setStreaming(false);
             const url = recording
             ? "/api/record/stop"
             : "/api/record/start";
 
-            await fetch(url, { method: "POST" });
-
-            setRecording(!recording);
-
-            // Optional: stop live view while recording
-            setStreaming(false);
+            await fetch(url);
+            setRecording(!recording); 
+            setDisabled(false);          
         } catch (err) {
             console.error("Recording toggle failed:", err);
         }
     };
 
-    // const toggleStreaming = async () => {
-    //     try{
-    //         const cam_url = streaming
-    //         ? "/api/camera_feed/stop"
-    //         : "/api/camera_feed/start";
-
-    //         await fetch(cam_url, { method: "POST"});
-    //         setStreaming(!streaming);
-
-    //         setRecording(false);
-    //     } catch (err) {
-    //         console.error("Streaming toggle failed:", err);
-    //     }
-    // };
+    const toggleStreaming = async () => {
+        try{
+            setDisabled(true);
+            setRecording(false);
+            if (streaming) {
+                await fetch("/api/camera_feed/stop", { method: "GET" });
+            }
+            setStreaming(!streaming);
+            setDisabled(false);
+        } catch (err) {
+            console.error("Streaming toggle failed:", err);
+        }
+    };
 
     return (
         <div>
-            <button onClick={() => setEnabled((v) => !v)}>
+            {/* <button onClick={() => setStreaming((v) => !v)}> */}
+            <button
+                onClick={toggleStreaming}
+                disabled={disabled}
+                style={{
+                    backgroundColor: streaming ? "#b22222" : "#226d8b",
+                    color: "white",
+                    padding: "10px 16px",
+                    fontWeight: "bold"
+                }}>
                 {streaming ? "Stop Live Feed" : "Start Live Feed"}
             </button>
 
             <button
                 onClick={toggleRecording}
+                disabled={disabled} 
                 style={{
                     backgroundColor: recording ? "#b22222" : "#228b22",
                     color: "white",
@@ -59,8 +67,8 @@ function LiveFeed() {
             </button>
 
             <h3>Status: {streaming ? "LIVE" : "STOPPED"}</h3>
-            <WebcamView enabled={enabled} />
-            <LuxSensors enabled={enabled}/>
+            <WebcamView enabled={streaming} />
+            <LuxSensors enabled={streaming}/>
         </div>
     );
 

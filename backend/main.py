@@ -2,9 +2,10 @@ from fastapi import FastAPI, WebSocket, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-import pandas as pd
-import os
+
 from routes import lux_meter, camera_feed, recorder
+from nodes.core import core_ as core
+
 
 
 @asynccontextmanager
@@ -12,7 +13,6 @@ async def lifespan(app: FastAPI):
     """
     Lifespan context: runs once on startup and once on shutdown.
     """
-    cleanup(app)
 
     yield
 

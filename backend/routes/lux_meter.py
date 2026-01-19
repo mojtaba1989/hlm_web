@@ -1,25 +1,27 @@
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-import utils
 import time
 import json
 import random
 
+from nodes.core import core_ as core
+from nodes.constants import SPS_INVERSE
+
 router = APIRouter()
 
 def save_sensor_row(row):
-    if utils.core_.writer:
-        utils.core_.writer.writerow(row)
+    if core.writer:
+        core.writer.writerow(row)
 
 def number_generator():
     while True:
         yield f"data: {random.random()}\n\n"
-        time.sleep(utils.SPS_INVERSE)
+        time.sleep(SPS_INVERSE)
 
 def sensor_loop():
     while True:
         ts = time.time()
-        frame_id, _ = utils.core_.counter.get()
+        frame_id, _ = core.video_recorder.get()
         data = {
             "ts": ts,
             "frame_id": frame_id,
@@ -28,10 +30,10 @@ def sensor_loop():
             "s3": random.random()+2,
             "s4": random.random()+3,
         }
-        if utils.core_.recording:
+        if core.recording:
             save_sensor_row(data)
         yield f"data: {json.dumps(data)}\n\n"
-        time.sleep(utils.SPS_INVERSE)
+        time.sleep(SPS_INVERSE)
 
 @router.get("/stream")
 def stream():

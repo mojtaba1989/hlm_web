@@ -1,20 +1,20 @@
 from fastapi import APIRouter
-import utils
+from nodes.core import core_ as core
 
 router = APIRouter()
 
-@router.post("/start")
+@router.get("/start")
 def start_record():
-    utils.core_.logger.logger.info("Initializing recording")
-    if not utils.core_.init_recording():
-        utils.core_.logger.logger.error("Error initializing recording")
+    core.logger.logger.info("Initializing recording")
+    if not core.init_recording():
+        core.logger.logger.error("Error initializing recording")
         return {"status": "Error initializing recording"}
-    utils.core_.recording = True
-    utils.core_.logger.logger.info("Start recording")
+    core.recording = True
+    core.logger.logger.info("Start recording")
     return {"status": "recording started"}
 
-@router.post("/stop")
+@router.get("/stop")
 def stop_record():
-    utils.core_.close_recording()
-    utils.core_.logger.logger.info("Stop recording")
+    core.close_recording()
+    core.logger.logger.info("Stop recording")
     return {"status": "recording stopped"}

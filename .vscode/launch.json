@@ -25,6 +25,20 @@
             "request": "launch",
             "command": "npm start",
             "cwd": "${workspaceFolder}/frontend"
+        },
+        {
+            "name": "Debug rec",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/rec",
+            "args": [],                 // command-line args if needed
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "preLaunchTask": "build rec"
         }
     ],
     "compounds": [
