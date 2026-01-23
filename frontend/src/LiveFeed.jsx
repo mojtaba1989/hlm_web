@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import WebcamView from "./components/CameraFeed";
 import LuxSensors from "./components/LuxSensors";
+import LoggerFeed from "./components/LoggerFeed";
 
 function LiveFeed() {
     const [streaming, setStreaming] = useState(false);
@@ -41,7 +42,6 @@ function LiveFeed() {
 
     return (
         <div>
-            {/* <button onClick={() => setStreaming((v) => !v)}> */}
             <button
                 onClick={toggleStreaming}
                 disabled={disabled}
@@ -67,8 +67,10 @@ function LiveFeed() {
             </button>
 
             <h3>Status: {streaming ? "LIVE" : "STOPPED"}</h3>
-            <WebcamView enabled={streaming} />
+            <LoggerFeed/>
+            <WebcamView enabled={streaming}/>
             <LuxSensors enabled={streaming}/>
+            
         </div>
     );
 

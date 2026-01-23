@@ -4,6 +4,8 @@ import subprocess
 import zmq
 import struct
 
+CAMERA_TCP_STREAM = False
+
 class video_recorder:
     def __init__(self):
         self.proc = None
@@ -19,6 +21,8 @@ class video_recorder:
         self.size = struct.calcsize(self.format)
 
     def init_socket(self):
+        if not CAMERA_TCP_STREAM:
+            return
         context = zmq.Context()
         self.socket = context.socket(zmq.SUB)
         self.socket.connect("tcp://127.0.0.1:5556")
@@ -39,9 +43,10 @@ class video_recorder:
         if not self.file_name:
             return
         avi_file = self.file_name.replace(".mp4", ".avi")
-        self.recording = True
-        self.init_socket()
-        self.rec_thread.start()
+        if CAMERA_TCP_STREAM:
+            self.recording = True
+            self.init_socket()
+            self.rec_thread.start()
         self.proc = subprocess.Popen([self.node, avi_file])
     
     def stop(self):

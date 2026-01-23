@@ -63,11 +63,6 @@ async def mjpeg_generator(request: Request):
 
     try:
         while camera_running:
-            if await request.is_disconnected():
-                core.logger.logger.warning("Client disconnected")
-                stop_camera()
-                break
-
             with frame_lock:
                 if current_frame is None:
                     frame = None

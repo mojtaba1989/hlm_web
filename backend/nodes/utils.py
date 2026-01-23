@@ -1,5 +1,6 @@
 from functools import wraps
 import inspect
+import os
 
 def try_except(func):
     @wraps(func)
@@ -48,3 +49,10 @@ def safe_call(method, *args, label=None, default=None, **kwargs):
 
         return default
 
+def get_size(file_name):
+    s = os.path.getsize(file_name)
+    ord = 0
+    while int(s / 1024) > 1:
+        s /= 1024
+        ord += 1
+    return f"{s:.2f} {['B', 'KB', 'MB', 'GB', 'TB'][ord]}"

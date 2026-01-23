@@ -5,6 +5,7 @@ import csv
 
 from nodes.utils import try_except, safe_call
 from nodes.camera_ import video_recorder
+from nodes.lux_ import lux_recorder
 from nodes.file_manager_ import FileManager
 from nodes.logger_ import LoggerManager
 from nodes.config_manager_ import ConfigManager
@@ -15,9 +16,8 @@ class Core:
         self.file_manager = FileManager()
         self.logger = LoggerManager()
         self.video_recorder = video_recorder()
+        self.lux_recorder = lux_recorder()
         self.config = ConfigManager({})
-        self.recording = False
-        self.writer = None
     
     @try_except
     def init_recording(self):
@@ -26,7 +26,7 @@ class Core:
         path = self.file_manager.get_path()
         current = self.file_manager.current
         self.metadata = {
-            "start_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "start_time": datetime.datetime.now(),
             "end_time": None,
             "duration": None,
             "recording": current,
@@ -40,10 +40,9 @@ class Core:
         # Set up logging
         self.logger.setup_file_logger(self.metadata["config"], self.metadata["log"])
 
-        # Set up CSV recording
-        self.csv_file = open(self.metadata["csv"], "w", newline="")
-        self.writer = csv.DictWriter(self.csv_file, fieldnames=["ts", "frame_id", "s1", "s2", "s3", "s4"])
-        self.writer.writeheader()
+        # Set up Lux recording
+        self.lux_recorder.file_name = self.metadata["csv"]
+        self.lux_recorder.start()
 
         # Set up video recorder
         self.video_recorder.file_name = self.metadata["video"]
@@ -52,11 +51,16 @@ class Core:
     
     @try_except
     def close_recording(self):
+        self.metadata["end_time"] = datetime.datetime.now()
         self.recording = False
         self.video_recorder.stop()
+        self.lux_recorder.stop()
         self.video_recorder.convert_to_mp4()
+        self.lux_recorder.convert_to_csv()
         self.writer = None
-        safe_call(self.csv_file.close, label="close csv file")
+        self.metadata["duration"] = str(self.metadata["end_time"] - self.metadata["start_time"])
+        self.metadata["end_time"] = self.metadata["end_time"].strftime("%Y-%m-%d %H:%M:%S")
+        self.metadata["start_time"] = self.metadata["start_time"].strftime("%Y-%m-%d %H:%M:%S")
         with open(self.metafile, "w") as f:
             json.dump(self.metadata, f, indent=2)
         return True

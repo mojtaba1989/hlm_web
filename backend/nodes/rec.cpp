@@ -8,7 +8,7 @@
 #include <zmq.hpp>
 
 
-
+bool TCP_ENABLED = false;
 cv::Mat latestFrame;
 std::mutex frameMutex;
 std::atomic<bool> running(true);
@@ -27,6 +27,7 @@ void signalHandler(int signum) {
 }
 
 void initZMQ() {
+    if (!TCP_ENABLED) return;
     zmq_pub.bind("tcp://127.0.0.1:5556");
     std::this_thread::sleep_for(std::chrono::seconds(1));
     std::cout << "ZMQ initialized" << std::endl;
@@ -55,6 +56,10 @@ void writerThread(const std::string &filename, double fps) {
     using clock = std::chrono::steady_clock;
     auto period = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
                   std::chrono::duration<double>(1.0 / fps));
+    
+    std::string csv_filename = filename + ".csv";
+    std::ofstream csv(csv_filename);
+    csv << "time_nsec,frame_id\n";
 
     cv::Mat lastFrame;
     bool writerOpened = false;
@@ -88,10 +93,14 @@ void writerThread(const std::string &filename, double fps) {
             auto now = std::chrono::system_clock::now();
             auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
             pkt_.unix_time = static_cast<uint64_t>(ns);
+            csv << pkt_.unix_time << "," << pkt_.frame_id << "\n";
             pkt_.frame_id++;
-            zmq::message_t msg(sizeof(Packet));
-            memcpy(msg.data(), &pkt_, sizeof(Packet));
-            zmq_pub.send(msg, zmq::send_flags::none);
+            if (TCP_ENABLED){
+                zmq::message_t msg(sizeof(Packet));
+                memcpy(msg.data(), &pkt_, sizeof(Packet));
+                zmq_pub.send(msg, zmq::send_flags::none);
+            }
+            
         }
 
         std::this_thread::sleep_until(nextTick);
@@ -99,7 +108,7 @@ void writerThread(const std::string &filename, double fps) {
 
     running = false;
     writer.release();
-    // csv.close();
+    csv.close();
 }
 
 

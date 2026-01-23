@@ -9,17 +9,25 @@ import {
 } from "recharts";
 
 const COLORS = {
+  s0: "#ff7f00", // orange
   s1: "#e41a1c", // red
   s2: "#377eb8", // blue
   s3: "#4daf4a", // green
-  s4: "#984ea3"  // purple
+  s4: "#984ea3",  // purple
+  s5: "#e4b20d", // yellow
+  s6: "#a65628", // brown
+  s7: "#f781bf"  // pink
 };
 
 const LABELS = {
+  s0: "Sensor 0",
   s1: "Sensor 1",
   s2: "Sensor 2",
   s3: "Sensor 3",
-  s4: "Sensor 4"
+  s4: "Sensor 4",
+  s5: "Sensor 5",
+  s6: "Sensor 6",
+  s7: "Sensor 7"
 };
 
 const LuxSensorsView = (

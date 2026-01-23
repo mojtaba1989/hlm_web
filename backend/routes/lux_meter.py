@@ -5,38 +5,31 @@ import json
 import random
 
 from nodes.core import core_ as core
-from nodes.constants import SPS_INVERSE
+from nodes.lux_ import lux_recorder
 
+
+sensor_running = False
 router = APIRouter()
-
-def save_sensor_row(row):
-    if core.writer:
-        core.writer.writerow(row)
-
-def number_generator():
-    while True:
-        yield f"data: {random.random()}\n\n"
-        time.sleep(SPS_INVERSE)
+lux_streamer = lux_recorder()
 
 def sensor_loop():
-    while True:
-        ts = time.time()
-        frame_id, _ = core.video_recorder.get()
-        data = {
-            "ts": ts,
-            "frame_id": frame_id,
-            "s1": random.random()+0,
-            "s2": random.random()+1,
-            "s3": random.random()+2,
-            "s4": random.random()+3,
-        }
-        if core.recording:
-            save_sensor_row(data)
-        yield f"data: {json.dumps(data)}\n\n"
-        time.sleep(SPS_INVERSE)
+    global sensor_running, lux_streamer
+    while sensor_running:
+        yield f"data: {json.dumps(lux_streamer.get())}\n\n"
+        time.sleep(1)
+
 
 @router.get("/stream")
 def stream():
+    global sensor_running
+    sensor_running = True
     return StreamingResponse(
         sensor_loop(),
         media_type="text/event-stream")
+
+@router.get("/stop")
+def stop():
+    global sensor_running, lux_streamer
+    sensor_running = False
+    lux_streamer.stop()
+    return {"message": "Sensor stopped!"}
