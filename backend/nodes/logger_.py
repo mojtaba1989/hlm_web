@@ -31,31 +31,37 @@ class LoggerManager:
         self.logger.setLevel(logging.INFO)
         self.setup_console_logger()
         self.setup_weblog_logger()
+        self.logger.info("[NODE-INFO] Logger node initialized")
 
     def setup_console_logger(self):
         if any(isinstance(h, logging.StreamHandler) for h in self.logger.handlers):
+            self.logger.warning("LogManager: Console logger already set up")
             return
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(self.formatter)
         self.logger.addHandler(console_handler)
+        self.logger.info("LogManager: Console logger set up")
 
     def setup_file_logger(self, config : dict, file_name : str):
         for handler in self.logger.handlers[:]:
             if isinstance(handler, logging.FileHandler):
+                self.logger.info("LogManager: old file logger removed")
                 self.logger.removeHandler(handler)
                 handler.close()
-                
+
         if config.get("LOG", {}).get("ENABLED", True):
             level = config.get("LOG", {}).get("LEVEL", "INFO")
             self.file_handler = logging.FileHandler(file_name)
             self.file_handler.setLevel(LOG_LEVELS.get(level, logging.INFO))
             self.file_handler.setFormatter(self.formatter)
             self.logger.addHandler(self.file_handler)
+            self.logger.info("LogManager: File logger set up")
 
     def setup_weblog_logger(self):
         for handler in self.logger.handlers[:]:
             if isinstance(handler, QueueLogHandler):
+                self.logger.info("LogManager: old queue logger removed")
                 self.logger.removeHandler(handler)
                 handler.close()
                 
@@ -64,13 +70,16 @@ class LoggerManager:
         self.queue_handler.setLevel(logging.INFO)
         self.queue_handler.setFormatter(self.formatter)
         self.logger.addHandler(self.queue_handler)
+        self.logger.info("LogManager: Queue logger set up")
 
     def set_level(self, level, target="all"):
-        if target == "all": 
+        if target == "all":
+            self.logger.info(f"LogManager: Setting log level to {level} - All handlers")
             for handler in self.logger.handlers:
                 handler.setLevel(LOG_LEVELS.get(level.upper(), logging.INFO))
             return True 
         else:
+            self.logger.info(f"LogManager: Setting log level to {level} - {target}")
             instance = self.handeler_types.get(target, None)
             if instance is not None:
                 for handler in self.logger.handlers:

@@ -12,16 +12,19 @@ from nodes.config_manager_ import ConfigManager
 
 
 class Core:
-    def __init__(self):
-        self.file_manager = FileManager()
-        self.logger = LoggerManager()
-        self.video_recorder = video_recorder()
-        self.lux_recorder = lux_recorder()
+    def __init__(self, logger=None):
+        self.file_manager = FileManager(logger)
+        self.logger = logger
+        self.video_recorder = video_recorder(logger)
+        self.lux_recorder = lux_recorder(logger)
         self.config = ConfigManager({})
+        self.logger.logger.info("[NODE-INFO] Core initialized")
     
     @try_except
     def init_recording(self):
+        self.logger.logger.info("Core: Starting new recording")
         if self.file_manager.create_dir() is None:
+            self.logger.logger.error("Core: Failed to create recording directory")
             return False
         path = self.file_manager.get_path()
         current = self.file_manager.current
@@ -38,7 +41,8 @@ class Core:
         self.metafile = os.path.join(path, 'metadata.json')
     # TODO: check with config
         # Set up logging
-        self.logger.setup_file_logger(self.metadata["config"], self.metadata["log"])
+        if self.logger:
+            self.logger.setup_file_logger(self.metadata["config"], self.metadata["log"])
 
         # Set up Lux recording
         self.lux_recorder.file_name = self.metadata["csv"]
@@ -51,6 +55,7 @@ class Core:
     
     @try_except
     def close_recording(self):
+        self.logger.logger.info("Core: Closing recording")
         self.metadata["end_time"] = datetime.datetime.now()
         self.recording = False
         self.video_recorder.stop()
@@ -63,7 +68,10 @@ class Core:
         self.metadata["start_time"] = self.metadata["start_time"].strftime("%Y-%m-%d %H:%M:%S")
         with open(self.metafile, "w") as f:
             json.dump(self.metadata, f, indent=2)
+        self.logger.logger.info("Core: Recording closed")
+        self.logger.logger.info(f"Core: Recording saved to {self.metadata['recording']}")
+        self.logger.logger.info(f"Core: Recording duration: {self.metadata['duration']}")
         return True
     
-
-core_ = Core()
+logger_ = LoggerManager()
+core_ = Core(logger_)

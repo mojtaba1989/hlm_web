@@ -6,7 +6,7 @@ import threading
 import asyncio
 import time
 
-from nodes.core import core_ as core
+from nodes.core import logger_ as logger
 from nodes.constants import FPS_INVERSE
 from nodes.utils import try_except, safe_call
 
@@ -28,6 +28,7 @@ def camera_loop():
         time.sleep(FPS_INVERSE)
 
 def start_camera():
+    logger.logger.info("Video Stream: Starting camera...")
     global picam2, camera_thread, camera_running
     time.sleep(0.3)
     picam2 = Picamera2()
@@ -37,14 +38,15 @@ def start_camera():
     camera_running = True
     camera_thread = threading.Thread(target=camera_loop, daemon=True)
     camera_thread.start()
-    core.logger.logger.info("Camera started")
+    logger.logger.info("Video Stream: Camera started")
 
 def stop_camera():
+    logger.logger.info("Video Stream: Stopping camera...")
     global picam2, camera_running, current_frame, camera_thread
     if not camera_running:
+        logger.logger.warning("Video Stream: Camera is not running - Aborting...")
         return JSONResponse(content={"message": "Camera is not running!"}, status_code=200)
 
-    core.logger.logger.warning("Stopping camera...")
     camera_running = False
     time.sleep(0.2)
     safe_call(picam2.stop, label="close picam2")
@@ -53,7 +55,7 @@ def stop_camera():
     picam2.close()
     picam2 = None
     time.sleep(15)
-    core.logger.logger.warning("Camera stopped")
+    logger.logger.info("Video Stream: Camera stopped")
     return JSONResponse(content={"message": "Camera stopped!"}, status_code=200)
 
 
