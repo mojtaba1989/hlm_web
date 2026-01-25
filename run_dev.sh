@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source ~/hlm_env/bin/activate
+
 set -e
 
 echo "Starting backend (FastAPI)..."

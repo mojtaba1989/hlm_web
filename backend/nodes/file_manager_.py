@@ -10,6 +10,12 @@ class FileManager:
         self.current = None
         self.symlink = "/home/dev/DATABASE/current"
         self.logger.logger.info("[NODE-INFO] File manager node initialized")
+        self.check_root()
+        self.update_list()
+    
+    def check_root(self):
+        if not os.path.exists(self.root):
+            os.mkdir(self.root)
 
     def update_list(self):
         self.logger.logger.info("FileManager: Updating recording list")

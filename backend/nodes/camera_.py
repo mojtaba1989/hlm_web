@@ -10,7 +10,7 @@ class video_recorder:
     def __init__(self, logger=None):
         self.logger = logger
         self.proc = None
-        self.node = "/home/dev/hlm_web/backend/nodes/rec"
+        self.node = "/home/dev/hlm_web/backend/nodes/build/rec"
         self.frame_id = -1
         self.frame_unix_time = -1
         self.recording = False
