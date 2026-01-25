@@ -22,5 +22,24 @@ This guide explains how to set up and build the system step by step.
 ```
 sudo apt install libopencv-dev
 sudo apt install libzmq3-dev
+sudo apt instal npm
+sudo apt install cmake
 ```
+3. Update ldconfig: `sudo ldconfig`
+4. Check the installed packages: `ldconfig -p | grep opencv`, `ldconfig -p | grep libzmq`
 
+## 4. Clone the Repository
+
+1. Connect to your Raspberry Pi via SSH.
+2. Clone the repository: `git clone https://github.com/mojtaba1989/hlm_web.git`
+3. Navigate to the cloned directory: `cd hlm_web`
+
+## 5. Build the C++ video recorder node
+
+1. Connect to your Raspberry Pi via SSH.
+2. Navigate to the repository directory: `cd hlm_web/backend/nodes`
+3. Create a build directory: `mkdir build`
+4. Navigate to the build directory: `cd build`
+5. Run CMake: `cmake ..`
+6. Build the project: `make`
+7. Check the video recorder node: `./rec test.avi`
