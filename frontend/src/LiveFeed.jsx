@@ -9,6 +9,7 @@ function LiveFeed() {
     const [streaming, setStreaming] = useState(false);
     const [recording, setRecording] = useState(false);
     const [disabled, setDisabled] = useState(false);
+    const navigate = useNavigate();
 
     const toggleRecording = async () => {
         try {
@@ -64,6 +65,17 @@ function LiveFeed() {
                     fontWeight: "bold"
                 }}>
                 {recording ? "Stop Recording" : "Start Recording"}
+            </button>
+
+            <button
+                onClick={() => navigate("/records")}
+                style={{
+                    backgroundColor: "#226d8b",
+                    color: "white",
+                    padding: "10px 16px",
+                    fontWeight: "bold"
+                }}>
+                Recordings
             </button>
 
             <h3>Status: {streaming ? "LIVE" : "STOPPED"}</h3>

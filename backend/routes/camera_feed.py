@@ -28,7 +28,6 @@ def camera_loop():
         time.sleep(FPS_INVERSE)
 
 def start_camera():
-    logger.logger.info("Video Stream: Starting camera...")
     global picam2, camera_thread, camera_running
     time.sleep(0.3)
     picam2 = Picamera2()
@@ -38,13 +37,11 @@ def start_camera():
     camera_running = True
     camera_thread = threading.Thread(target=camera_loop, daemon=True)
     camera_thread.start()
-    logger.logger.info("Video Stream: Camera started")
+    logger.logger.info("Video Stream: Running")
 
 def stop_camera():
-    logger.logger.info("Video Stream: Stopping camera...")
     global picam2, camera_running, current_frame, camera_thread
     if not camera_running:
-        logger.logger.warning("Video Stream: Camera is not running - Aborting...")
         return JSONResponse(content={"message": "Camera is not running!"}, status_code=200)
 
     camera_running = False

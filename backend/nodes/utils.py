@@ -1,6 +1,11 @@
 from functools import wraps
 import inspect
 import os
+import threading
+import socket
+import struct
+import time
+import os
 
 def try_except(func):
     @wraps(func)
@@ -56,3 +61,112 @@ def get_size(file_name):
         s /= 1024
         ord += 1
     return f"{s:.2f} {['B', 'KB', 'MB', 'GB', 'TB'][ord]}"
+
+class failed_loop_ctrl:
+    def __init__(self, max_failed=-1):
+        self.failed_to_get = 0
+        self.max_failed = -1 if int(max_failed) <= 0 else max_failed
+
+    def is_failed(self):
+        return self.max_failed != -1 and self.failed_to_get >= self.max_failed
+    
+    def reset(self):
+        self.failed_to_get = 0
+
+    def increment(self):
+        self.failed_to_get += 1
+
+class socket_recorder:
+    def __init__(
+            self,
+            host,
+            port,
+            name,
+            logger=None,
+            max_failed=-1,
+            packet_size=-1
+        ):
+        self.set_logger(logger)
+        self.name = name
+        self.host = host
+        self.port = port
+        self.socket = None
+        self.file_name = None
+        self.running = False
+        self.packet_size = packet_size
+        self.flc = failed_loop_ctrl(max_failed=max_failed)
+        self.thread = None
+
+    def is_duplicate(self, obj_dict: dict):
+        for key in obj_dict.keys():
+            obj = obj_dict[key]['recorder']
+            if obj.host == self.host and obj.port == self.port:
+                return True
+            if obj.name == self.name:
+                return True
+            if obj.file_name == self.file_name:
+                return True
+        return False
+    
+    def set_logger(self, logger):
+        def _noop(*args, **kwargs):
+            pass
+        base = getattr(logger, "logger", None)
+        self.info = getattr(base, "info", _noop)
+        self.warning = getattr(base, "warning", _noop)
+        self.error = getattr(base, "error", _noop)
+
+    @try_except
+    def init_socket(self, timeout=1):
+        self.info(f"Initializing {self.name} socket")
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket.bind((self.host, self.port))
+        self.socket.settimeout(timeout)
+        return True
+
+    def set_file_name(self, file_name):
+        self.file_name = file_name.replace(file_name.split(".")[-1], "bin")
+
+    def loop(self):
+        if not self.file_name:
+            self.error(f"File name not set for {self.name} recorder")
+            return
+        if not self.socket:
+            self.error(f"Socket not initialized for {self.name} recorder")
+            return
+        with open(self.file_name, "wb") as f:
+            while self.running:
+                try:
+                    msg, addr = self.socket.recvfrom(2048)
+                except socket.timeout:
+                    if self.flc.check():
+                        self.error(f"{self.name}: Maximum attempts reached - Closing socket")
+                        return
+                    self.flc.increment()
+                    self.warning(f"{self.name}: Attempt {self.flc.failed_to_get}/{self.flc.max_failed} - Failed to get data")
+                    continue
+                if self.packet_size !=-1 and len(msg) != self.size:
+                    continue
+                header = struct.pack("<QI", time.time_ns(), len(msg))
+                f.write(header)
+                f.write(msg)
+                self.failed_to_get = 0
+
+    def start(self):
+        self.running = True
+        if not self.init_socket():
+            self.error(f"Failed to initialize {self.name}-{(self.host, self.port)} socket")
+            return
+        self.thread = threading.Thread(target=self.loop)
+        self.thread.start()
+        self.info(f"{self.name} recorder initialized")
+
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
+            self.thread = None
+        if self.socket:
+            self.socket.close()
+            self.socket = None
+        self.info(f"{self.name} recorder stopped")

@@ -3,7 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
-from routes import lux_meter, camera_feed, recorder, logger_view
+from routes import lux_meter
+from routes import camera_feed
+from routes import recorder
+from routes import logger_view
+from routes import records_browser
 from nodes.core import core_ as core
 
 
@@ -36,6 +40,7 @@ app.include_router(lux_meter.router, prefix="/api/lux_sensors")
 app.include_router(camera_feed.router, prefix="/api/camera_feed")
 app.include_router(recorder.router, prefix="/api/record")
 app.include_router(logger_view.router, prefix="/api/logger")
+app.include_router(records_browser.router, prefix="/api/records")
 
 @app.get("/")
 def root():
