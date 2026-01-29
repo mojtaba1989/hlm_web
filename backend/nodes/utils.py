@@ -6,6 +6,18 @@ import socket
 import struct
 import time
 import os
+from enum import IntEnum
+
+class ErrorCodes(IntEnum):
+    SUCCESS = 0
+    ADDRESS_ALREADY_IN_USE = 1
+    RECEVEIVED_INVALID_DATA = 2
+    TIMEOUT = 3
+    NOT_FOUND = 4
+    UNKNOWN_ERROR = 5
+
+    def desc(error_code):
+        return ErrorCodes(error_code).name
 
 def try_except(func):
     @wraps(func)
@@ -108,6 +120,31 @@ class socket_recorder:
                 return True
         return False
     
+    def set_file_name(self, file_name):
+        self.file_name = file_name.replace(file_name.split(".")[-1], "bin")
+
+    def set_address(self, host, port, obj_dict):
+        self.host = host
+        self.port = port
+        is_duplicate = self.is_duplicate(obj_dict)
+
+    def is_healthy(self):
+        if self.socket:
+            return ErrorCodes.ADDRESS_ALREADY_IN_USE
+        socket_temp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        socket_temp.bind((self.host, self.port))
+        socket_temp.settimeout(1)
+        try:
+            msg, addr = socket_temp.recvfrom(1024)
+        except socket.timeout:
+            socket_temp.close()
+            return ErrorCodes.TIMEOUT
+        if len(msg) == self.packet_size:
+            socket_temp.close()
+            return ErrorCodes.SUCCESS
+        socket_temp.close()
+        return ErrorCodes.RECEVEIVED_INVALID_DATA
+
     def set_logger(self, logger):
         def _noop(*args, **kwargs):
             pass
@@ -123,9 +160,6 @@ class socket_recorder:
         self.socket.bind((self.host, self.port))
         self.socket.settimeout(timeout)
         return True
-
-    def set_file_name(self, file_name):
-        self.file_name = file_name.replace(file_name.split(".")[-1], "bin")
 
     def loop(self):
         if not self.file_name:

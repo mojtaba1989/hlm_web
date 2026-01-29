@@ -6,6 +6,7 @@
 #include <fstream>
 #include <csignal>
 #include <zmq.hpp>
+#include <string>
 
 
 bool TCP_ENABLED = false;
@@ -33,8 +34,14 @@ void initZMQ() {
     std::cout << "ZMQ initialized" << std::endl;
 }
 
-void captureThread() {
-    cv::VideoCapture cap("/dev/video0");
+void captureThread(const std::string &cam = "/dev/video0") {
+    cv::VideoCapture cap(cam);
+
+    if (!cap.isOpened()) {
+        std::cerr << "ERROR: Cannot open camera: " << cam << std::endl;
+        std::exit(1);   // or std::exit(1)
+    }
+
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
     cap.set(cv::CAP_PROP_FPS, 30);
@@ -117,8 +124,8 @@ int main(int argc, char** argv) {
 
     initZMQ();
     std::cout << "Recording started:"<< argv[1] << std::endl;
-
-    std::thread capT(captureThread);
+    std::string camera = (argc > 2) ? argv[2] : "/dev/video0";
+    std::thread capT(captureThread, camera);
     std::thread wrT(writerThread, argv[1], 30.0);
 
     capT.join();

@@ -43,6 +43,11 @@ function LiveFeed() {
 
     return (
         <div>
+            <div className="text-green-500 text-4xl font-bold">
+                TAILWIND WORKS
+            </div>
+
+
             <button
                 onClick={toggleStreaming}
                 disabled={disabled}
@@ -78,11 +83,22 @@ function LiveFeed() {
                 Recordings
             </button>
 
+            <button
+                onClick={() => navigate("/config")}
+                style={{
+                    backgroundColor: "#226d8b",
+                    color: "white",
+                    padding: "10px 16px",
+                    fontWeight: "bold"
+                }}>
+                Configuration
+            </button>
+
             <h3>Status: {streaming ? "LIVE" : "STOPPED"}</h3>
             <LoggerFeed/>
             <WebcamView enabled={streaming}/>
             <LuxSensors enabled={streaming}/>
-            
+
         </div>
     );
 

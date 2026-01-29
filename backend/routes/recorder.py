@@ -14,3 +14,4 @@ def start_record():
 def stop_record():
     core.close_recording()
     return {"status": "recording stopped"}
+

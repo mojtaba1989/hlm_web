@@ -7,8 +7,10 @@ import asyncio
 import time
 
 from nodes.core import logger_ as logger
+from nodes.core import core_ as core
 from nodes.constants import FPS_INVERSE
-from nodes.utils import try_except, safe_call
+from nodes.utils import safe_call
+from nodes.camera_ import list_real_cameras
 
 router = APIRouter()
 
@@ -95,3 +97,15 @@ async def stream(request: Request):
 async def stop():
     stop_camera()
     return {"message": "Camera stopped!"}
+
+@router.get("/cameras")
+async def list_cameras():
+    return {"cameras": list_real_cameras()}
+
+@router.get("/is_healthy")
+async def is_healthy():
+    return {"message": core.video_recorder.is_healthy}
+
+@router.get("/get_camera")
+async def is_recording():
+    return {"message": core.video_recorder.camera_device}

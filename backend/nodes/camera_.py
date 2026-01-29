@@ -3,12 +3,15 @@ import signal
 import subprocess
 import zmq
 import struct
+import time
+import cv2
+import os
 
 CAMERA_TCP_STREAM = False
 
 class video_recorder:
     def __init__(self, logger=None):
-        self.logger = logger
+        self.set_logger(logger)
         self.proc = None
         self.node = "/home/dev/hlm_web/backend/nodes/build/rec"
         self.frame_id = -1
@@ -20,19 +23,45 @@ class video_recorder:
         self.file_name = None
         self.format = '<IQ'
         self.size = struct.calcsize(self.format)
-        self.logger.logger.info("[NODE-INFO] Video recorder node initialized")
+        self.info("[NODE-INFO] Video recorder node initialized")
+        self.camera_device = None
+        self.set_camera('/dev/video0')
+
+    def set_logger(self, logger):
+        def _noop(*args, **kwargs):
+            pass
+        base = getattr(logger, "logger", None)
+        self.info = getattr(base, "info", _noop)
+        self.warning = getattr(base, "warning", _noop)
+        self.error = getattr(base, "error", _noop)
+
+    def set_camera(self, camera_device: str=None):
+        self.camera_device = camera_device
+        self.is_healthy = self.check_camera()
+
+    def set_file_name(self, file_name):
+        self.file_name = file_name
+
+    def check_camera(self):
+        cam = self.camera_device
+        cap = cv2.VideoCapture(cam, cv2.CAP_V4L2)
+        time.sleep(.1)
+        check = cap.isOpened()
+        cap.release()
+        del cap
+        return check
 
     def init_socket(self):
         if not CAMERA_TCP_STREAM:
-            self.logger.logger.warning("TCP-Camera socket not enabled")
+            self.warning("TCP-Camera socket not enabled")
             return
-        self.logger.logger.info("Initializing TCP-Camera socket")
+        self.info("Initializing TCP-Camera socket")
         context = zmq.Context()
         self.socket = context.socket(zmq.SUB)
         self.socket.connect("tcp://127.0.0.1:5556")
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
         self.rec_thread = threading.Thread(target=self.loop_, daemon=True)
-        self.logger.logger.info("TCP-Camera socket initialized")
+        self.info("TCP-Camera socket initialized")
         
     def loop_(self):
         while self.recording:
@@ -43,23 +72,30 @@ class video_recorder:
                 self.frame_id, self.frame_unix_time = struct.unpack(self.format, msg)
 
     def start(self):
-        self.logger.logger.info("Initializing video recorder")
+        self.info("Initializing video recorder")
         if self.recording:
-            self.logger.logger.warning("Video recorder already started")
+            self.warning("Video recorder already started")
             return
         if not self.file_name:
-            self.logger.logger.error("Video recorder file name not set")
+            self.error("Video recorder file name not set")
             return
         avi_file = self.file_name.replace(".mp4", ".avi")
         if CAMERA_TCP_STREAM:
             self.recording = True
             self.init_socket()
             self.rec_thread.start()
-        self.proc = subprocess.Popen([self.node, avi_file])
-        self.logger.logger.info("Video recorder started")
+        if self.camera_device:
+            self.proc = subprocess.Popen([self.node, avi_file, self.camera_device])
+        else:
+            self.proc = subprocess.Popen([self.node, avi_file])
+        time.sleep(.5)
+        if self.proc.poll() is not None:
+            self.error("Video recorder failed to start")
+            return
+        self.info("Video recorder started")
     
     def stop(self):
-        self.logger.logger.info("Stopping video recorder")
+        self.info("Stopping video recorder")
         self.recording = False
         if self.proc:
             self.proc.send_signal(signal.SIGINT)
@@ -72,16 +108,16 @@ class video_recorder:
             self.rec_thread = None
         self.frame_id = -1
         self.frame_unix_time = -1
-        self.logger.logger.info("Video recorder stopped")
+        self.info("Video recorder stopped")
     
     def get(self):
         with self.lock:
             return self.frame_id, self.frame_unix_time
 
     def convert_to_mp4(self):
-        self.logger.logger.info("AVI -> MP4: Converting to MP4...")
+        self.info("AVI -> MP4: Converting to MP4...")
         if not self.file_name:
-            self.logger.logger.error("AVI -> MP4: Video recorder file name not set")
+            self.error("AVI -> MP4: Video recorder file name not set")
             return
         avi_file = self.file_name.replace(".mp4", ".avi")
         cmd = [
@@ -93,4 +129,29 @@ class video_recorder:
             self.file_name
         ]
         subprocess.run(cmd, check=True)
-        self.logger.logger.info("AVI -> MP4: Conversion complete")
+        self.info("AVI -> MP4: Conversion complete")
+
+def list_real_cameras(max_devices=64):
+    base = "/sys/class/video4linux"
+    real_cams = []
+
+    for dev in os.listdir(base):
+        dev_path = f"/dev/{dev}"
+        name_file = os.path.join(base, dev, "name")
+        if not os.path.exists(dev_path) or not os.path.exists(name_file):
+            continue
+
+        with open(name_file) as f:
+            name = f.read().strip().lower()
+
+        # Skip virtual / encoder devices
+        if "pispbe" in name or "rpi" in name:
+            continue
+
+        # Optional: check if OpenCV can open it
+        cap = cv2.VideoCapture(dev_path, cv2.CAP_V4L2)
+        if cap.isOpened():
+            real_cams.append((dev_path, name))
+        cap.release()
+
+    return real_cams
