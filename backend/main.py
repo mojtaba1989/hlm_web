@@ -8,6 +8,7 @@ from routes import camera_feed
 from routes import recorder
 from routes import logger_view
 from routes import records_browser
+from routes import config_manager
 from nodes.core import core_ as core
 
 
@@ -41,6 +42,7 @@ app.include_router(camera_feed.router, prefix="/api/camera_feed")
 app.include_router(recorder.router, prefix="/api/record")
 app.include_router(logger_view.router, prefix="/api/logger")
 app.include_router(records_browser.router, prefix="/api/records")
+app.include_router(config_manager.router, prefix="/api")
 
 @app.get("/")
 def root():

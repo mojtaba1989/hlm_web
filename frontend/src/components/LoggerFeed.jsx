@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
+
 
 function LoggerFeed() {
   const [logs, setLogs] = useState([]);
   const bottomRef = useRef(null);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
-    const evtSource = new EventSource("/api/logger/logs");
+    const evtSource = new EventSource(`${backendUrl}/api/logger/logs`);
 
     evtSource.onmessage = (event) => {
       setLogs((prev) => [...prev, event.data]);

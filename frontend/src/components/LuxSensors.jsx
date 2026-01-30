@@ -1,19 +1,21 @@
 import React, { useEffect, useState} from "react";
 import LuxSensorsView from "../views/LuxSensorsView";
+import axios from "axios";
 
 const LuxSensors = ({enabled}) => {
     const [data, setData] = useState([]);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     useEffect(()=>{
         if (!enabled) {
             try {
-                fetch("/api/lux_sensors/stop");
+                fetch(`${backendUrl}/api/lux_sensors/stop`);
             } catch (err) {
                 console.error("LUX DAQ feed stop failed:", err);
             }
             return;
         }
-        const eventSource = new EventSource("/api/lux_sensors/stream");
+        const eventSource = new EventSource(`${backendUrl}/api/lux_sensors/stream`);
         eventSource.onmessage = (event) => {
             const { s0, s1, s2, s3, s4, s5, s6, s7 } = JSON.parse(event.data);
             const now = Date.now();

@@ -1,147 +1,211 @@
-import { useState } from "react";
-import "./styles/config.css";
+import { useEffect, useState } from "react";
+import { CONFIG as DEFAULT_CONFIG } from "./config_files/config";
+import { styles } from "./styles/config_style";
 
-const configData = {
-  camera: {
-    ENABLED: [true, true],
-    Device_ID: ["/dev/video0", false],
-    Resolution: [[1280, 720], false],
-    Framerate: [30, false],
-    TCP_STREAM: [false, true],
-    TCP_IP: ["127.0.0.1", false],
-    TCP_PORT: [5556, false],
-    Streaming_fps: [30, true],
-  },
-  DAQ: {
-    ENABLED: [true, true],
-    IP: ["10.0.0.105", false],
-    PORT: [5555, false],
-    Streaming_rate: [10, true],
-    Frequency: [1612.8, false],
-    Samples_per_packet: [16, false],
-    Channel_map: {
-      ch1: [0, true],
-      ch2: [1, true],
-      ch3: [2, true],
-      ch4: [3, true],
-    },
-  },
-};
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+async function fetchConfig() {
+  const res = await fetch(`${backendUrl}/api/config`);
+  return res.json();
+}
 
-export default function ConfigEditor() {
-  const [config, setConfig] = useState(configData);
+async function saveConfigApi(cfg) {
+  return fetch(`${backendUrl}/api/config`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cfg),
+  });
+}
 
-  const updateValue = (path, newValue) => {
-    const updated = structuredClone(config);
-    let ref = updated;
+/* =========================
+   Input renderers
+========================= */
+function BooleanSelect({ value, disabled, onChange }) {
+  return (
+    <select
+      value={String(value)}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value === "true")}
+      style={styles.select}
+    >
+      <option value="true">true</option>
+      <option value="false">false</option>
+    </select>
+  );
+}
 
-    for (let i = 0; i < path.length - 1; i++) {
-      ref = ref[path[i]];
-    }
+function TextInput({ value, disabled, onChange }) {
+  return (
+    <input
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        ...styles.input,
+        opacity: disabled ? 0.45 : 1,
+      }}
+    />
+  );
+}
 
-    ref[path.at(-1)][0] = newValue;
-    setConfig(updated);
-  };
+/* =========================
+   Field renderer
+========================= */
+function ConfigField({
+  section,
+  field,
+  value,
+  editable,
+  enabled,
+  onUpdate,
+}) {
+  if (!editable) {
+    return <span style={styles.readonly}>{String(value)}</span>;
+  }
 
-  const renderNode = (node, path = []) => {
-    if (!node || typeof node !== "object") return null;
-
-    return Object.entries(node).map(([key, value]) => {
-      // Leaf node: [value, editable]
-      if (Array.isArray(value) && value.length === 2) {
-        const [val, editable] = value;
-        if (!editable) return null;
-
-        return (
-          <div
-            key={path.join(".") + key}
-            className="flex items-center justify-between gap-4 py-1"
-          >
-            <span className="text-sm text-gray-300">{key}</span>
-            {renderInput(val, (v) => updateValue([...path, key], v))}
-          </div>
-        );
-      }
-
-      // Nested section
-      return (
-        <div
-          key={path.join(".") + key}
-          className="border border-gray-700 rounded-lg p-4 mt-4"
-        >
-          <h3 className="text-sm font-semibold text-blue-400 mb-2">
-            {key}
-          </h3>
-          <div className="pl-2 space-y-2">
-            {renderNode(value, [...path, key])}
-          </div>
-        </div>
-      );
-    });
-  };
+  if (typeof value === "boolean") {
+    return (
+      <BooleanSelect
+        value={value}
+        disabled={!enabled}
+        onChange={(v) => onUpdate(section, field, v)}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <h1 className="text-xl font-bold">System Configuration</h1>
+    <TextInput
+      value={Array.isArray(value) ? value.join(", ") : value}
+      disabled={!enabled}
+      onChange={(v) =>
+        onUpdate(
+          section,
+          field,
+          Array.isArray(value)
+            ? v.split(",").map((x) => Number(x.trim()))
+            : typeof value === "number"
+            ? Number(v)
+            : v
+        )
+      }
+    />
+  );
+}
 
-        {renderNode(config)}
+/* =========================
+   Section renderer
+========================= */
+function ConfigSection({ name, data, onUpdate }) {
+  const enabled = data.ENABLED?.[0] ?? true;
 
-        <div className="mt-6">
-          <h2 className="text-sm text-gray-400 mb-2">Live JSON</h2>
-          <pre className="bg-black text-green-400 p-3 rounded text-xs overflow-auto">
-            {JSON.stringify(config, null, 2)}
-          </pre>
-        </div>
-      </div>
+  return (
+    <div
+      style={{
+        ...styles.section,
+        // opacity: enabled ? 1 : 0.45,
+      }}
+    >
+      <h2 style={styles.sectionTitle}>{name}</h2>
+
+      {Object.entries(data).map(([key, val]) => {
+        if (Array.isArray(val)) {
+          const [value, editable] = val;
+          return (
+            <div key={key} style={styles.row}>
+              <label style={styles.label}>{key}</label>
+              <ConfigField
+                section={name}
+                field={key}
+                value={value}
+                editable={editable}
+                enabled={key === "ENABLED" ? true : enabled}
+                onUpdate={onUpdate}
+              />
+            </div>
+          );
+        }
+
+        // nested (Channel_map)
+        return (
+          <div key={key} style={styles.subSection}>
+            <div style={styles.subTitle}>{key}</div>
+            {Object.entries(val).map(([subKey, subVal]) => {
+              const [value, editable] = subVal;
+              return (
+                <div key={subKey} style={styles.row}>
+                  <label style={styles.label}>{subKey}</label>
+                  {editable ? (
+                    <TextInput
+                      value={value}
+                      disabled={!enabled}
+                      onChange={(v) =>
+                        onUpdate(name, key, v, subKey)
+                      }
+                    />
+                  ) : (
+                    <span style={styles.readonly}>{value}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-/* ================= INPUT RENDERER ================= */
+/* =========================
+   Main Page
+========================= */
+export default function ConfigPage() {
+  const [config, setConfig] = useState(DEFAULT_CONFIG);
+  const [status, setStatus] = useState("");
 
-function renderInput(value, onChange) {
-  if (typeof value === "boolean") {
-    return (
-      <input
-        type="checkbox"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-        className="w-5 h-5 accent-blue-500"
-      />
-    );
-  }
+  useEffect(() => {
+    fetchConfig()
+      .then((cfg) => Object.keys(cfg).length && setConfig(cfg))
+      .catch(() => {});
+  }, []);
 
-  if (typeof value === "number") {
-    return (
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-24 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
-      />
-    );
-  }
+  const updateValue = (section, key, value, subKey = null) => {
+    setConfig((prev) => {
+      const updated = structuredClone(prev);
+      if (subKey) {
+        updated[section][key][subKey][0] = value;
+      } else {
+        updated[section][key][0] = value;
+      }
+      return updated;
+    });
+  };
 
-  if (typeof value === "string") {
-    return (
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-48 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
-      />
-    );
-  }
+  const saveConfig = async () => {
+    setStatus("Saving...");
+    try {
+      await saveConfigApi(config);
+      setStatus("✅ Saved");
+    } catch {
+      setStatus("❌ Save failed");
+    }
+  };
 
-  // Arrays (like resolution)
-  if (Array.isArray(value)) {
-    return (
-      <span className="text-gray-400 text-sm">
-        {value.join(" × ")}
-      </span>
-    );
-  }
+  return (
+    <div style={styles.page}>
+      <h1 style={styles.title}>System Configuration</h1>
 
-  return null;
+      <button onClick={saveConfig} style={styles.saveBtn}>
+        Save
+      </button>
+      <span style={styles.status}>{status}</span>
+
+      {Object.entries(config).map(([name, data]) => (
+        <ConfigSection
+          key={name}
+          name={name}
+          data={data}
+          onUpdate={updateValue}
+        />
+      ))}
+    </div>
+  );
 }

@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 function FolderBrowser() {
   const [path, setPath] = useState("");
   const [folders, setFolders] = useState([]);
   const [selected, setSelected] = useState(new Set());
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
-    fetch(`/api/records/list?subpath=${encodeURIComponent(path)}`)
+    fetch(`${backendUrl}/api/records/list?subpath=${encodeURIComponent(path)}`)
       .then(res => res.json())
       .then(data => {
         setFolders(data.folders);
@@ -36,7 +38,7 @@ function FolderBrowser() {
     const params = new URLSearchParams();
     selected.forEach(p => params.append("paths", p));
 
-    window.location.href = `/api/records/download-multiple?${params.toString()}`;
+    window.location.href = `${backendUrl}/api/records/download-multiple?${params.toString()}`;
   };
 
   return (
@@ -92,7 +94,7 @@ function FolderBrowser() {
                 </button>
 
                 <a
-                href={`/api/records/download-folder?path=${encodeURIComponent(fullPath)}`}
+                href={`${backendUrl}/api/records/download-folder?path=${encodeURIComponent(fullPath)}`}
                 >
                 <button>
                     Zip

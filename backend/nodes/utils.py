@@ -173,7 +173,7 @@ class socket_recorder:
                 try:
                     msg, addr = self.socket.recvfrom(2048)
                 except socket.timeout:
-                    if self.flc.check():
+                    if self.flc.is_failed():
                         self.error(f"{self.name}: Maximum attempts reached - Closing socket")
                         return
                     self.flc.increment()

@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react"
 
 function WebcamView({ enabled }) {
-  const [src, setSrc] = useState("");
+  const [src, setSrc] = useState(null);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   useEffect(() => {
     if (!enabled) {
       try {
-          fetch("/api/camera_feed/stop");
-          setSrc("");
+          fetch(`${backendUrl}/api/camera_feed/stop`);
+          setSrc(null);
       } catch (err) {
           console.error("Camera feed stop failed:", err);
       }
       return;
     }
-    setSrc("/api/camera_feed/stream");
+    setSrc(`${backendUrl}/api/camera_feed/stream`);
   }, [enabled]);
 
   return (

@@ -10,14 +10,15 @@ function LiveFeed() {
     const [recording, setRecording] = useState(false);
     const [disabled, setDisabled] = useState(false);
     const navigate = useNavigate();
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     const toggleRecording = async () => {
         try {
             setDisabled(true);
             setStreaming(false);
             const url = recording
-            ? "/api/record/stop"
-            : "/api/record/start";
+            ? `${backendUrl}/api/record/stop`
+            : `${backendUrl}/api/record/start`;
 
             await fetch(url);
             setRecording(!recording); 
@@ -32,7 +33,7 @@ function LiveFeed() {
             setDisabled(true);
             setRecording(false);
             if (streaming) {
-                await fetch("/api/camera_feed/stop", { method: "GET" });
+                await fetch(`${backendUrl}/api/camera_feed/stop`, { method: "GET" });
             }
             setStreaming(!streaming);
             setDisabled(false);
@@ -43,11 +44,6 @@ function LiveFeed() {
 
     return (
         <div>
-            <div className="text-green-500 text-4xl font-bold">
-                TAILWIND WORKS
-            </div>
-
-
             <button
                 onClick={toggleStreaming}
                 disabled={disabled}
@@ -82,7 +78,6 @@ function LiveFeed() {
                 }}>
                 Recordings
             </button>
-
             <button
                 onClick={() => navigate("/config")}
                 style={{
@@ -98,7 +93,7 @@ function LiveFeed() {
             <LoggerFeed/>
             <WebcamView enabled={streaming}/>
             <LuxSensors enabled={streaming}/>
-
+            
         </div>
     );
 
