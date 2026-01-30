@@ -2,7 +2,7 @@
 export const CONFIG = {
   CAMERA: {
     ENABLED: [true, true],
-    Device_ID: ["/dev/video0", false],
+    Device_ID: ["/dev/video0", true],
     Resolution: [[1280, 720], false],
     Framerate: [30, false],
     TCP_STREAM: [false, true],

@@ -2,7 +2,6 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 import time
 import json
-import random
 
 from nodes.core import logger_ as logger
 from nodes.core import core_ as core

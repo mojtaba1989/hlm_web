@@ -5,7 +5,7 @@ import WebcamView from "./components/CameraFeed";
 import LuxSensors from "./components/LuxSensors";
 import LoggerFeed from "./components/LoggerFeed";
 
-function LiveFeed() {
+export default function HomePage() {
     const [streaming, setStreaming] = useState(false);
     const [recording, setRecording] = useState(false);
     const [disabled, setDisabled] = useState(false);
@@ -98,5 +98,3 @@ function LiveFeed() {
     );
 
 }
-
-export default LiveFeed;

@@ -66,4 +66,58 @@ export const styles = {
     fontSize: 12,
     color: "#111",
   },
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  popup: {
+    backgroundColor: "#fff",
+    padding: "20px",
+    borderRadius: "8px",
+    minWidth: "300px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+  },
+
+  title: {
+    margin: "0 0 10px 0",
+    fontSize: "18px",
+    fontWeight: 600,
+  },
+
+  message: {
+    marginBottom: "20px",
+    fontSize: "14px",
+    color: "#444",
+  },
+
+  actions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "10px",
+  },
+
+  yesButton: {
+    padding: "6px 14px",
+    borderRadius: "6px",
+    border: "none",
+    cursor: "pointer",
+    backgroundColor: "#d32f2f",
+    color: "#fff",
+    fontWeight: 500,
+  },
+
+  noButton: {
+    padding: "6px 14px",
+    borderRadius: "6px",
+    border: "none",
+    cursor: "pointer",
+    backgroundColor: "#e0e0e0",
+    color: "#333",
+    fontWeight: 500,
+  },
 };

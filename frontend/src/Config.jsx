@@ -1,10 +1,18 @@
-import { useEffect, useState } from "react";
-import { CONFIG as DEFAULT_CONFIG } from "./config_files/config";
+import { use, useEffect, useState } from "react";
+// import { CONFIG as DEFAULT_CONFIG } from "./config_files/config";
 import { styles } from "./styles/config_style";
+import { useNavigate } from "react-router-dom";
 
+const DEFAULT_CONFIG = {};
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 async function fetchConfig() {
   const res = await fetch(`${backendUrl}/api/config`);
+  return res.json();
+}
+
+async function fetchDefaultConfig() {
+  const res = await fetch(`${backendUrl}/api/default`);
   return res.json();
 }
 
@@ -14,6 +22,19 @@ async function saveConfigApi(cfg) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(cfg),
   });
+}
+
+async function check_unsaved(cfg) {
+  return fetch(`${backendUrl}/api/check_unsaved`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cfg),
+  });
+}
+
+async function get_cameras() {
+  return fetch(`${backendUrl}/api/camera_feed/cameras`)
+  .then((res) => res.json());
 }
 
 /* =========================
@@ -27,8 +48,8 @@ function BooleanSelect({ value, disabled, onChange }) {
       onChange={(e) => onChange(e.target.value === "true")}
       style={styles.select}
     >
-      <option value="true">true</option>
-      <option value="false">false</option>
+      <option value="true">TRUE</option>
+      <option value="false">FALSE</option>
     </select>
   );
 }
@@ -47,6 +68,27 @@ function TextInput({ value, disabled, onChange }) {
   );
 }
 
+function CameraInput({value, disabled, onChange, cameras}) {
+  return (
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      style={styles.select}
+    >
+      {cameras.length === 0 ? (
+          <option>Loading cameras...</option>
+        ) : (
+          cameras.map(([path, name]) => (
+            <option key={path} value={path}>
+              {name}
+            </option>
+          ))
+        )}
+    </select>
+  );
+}
+
 /* =========================
    Field renderer
 ========================= */
@@ -57,6 +99,7 @@ function ConfigField({
   editable,
   enabled,
   onUpdate,
+  cameras
 }) {
   if (!editable) {
     return <span style={styles.readonly}>{String(value)}</span>;
@@ -68,6 +111,17 @@ function ConfigField({
         value={value}
         disabled={!enabled}
         onChange={(v) => onUpdate(section, field, v)}
+      />
+    );
+  }
+
+  if (field === "Devide_ID"){
+    return (
+      <CameraInput
+        value={value}
+        disabled={!enabled}
+        onChange={(v) => onUpdate(section, field, v)}
+        cameras={cameras}
       />
     );
   }
@@ -94,7 +148,7 @@ function ConfigField({
 /* =========================
    Section renderer
 ========================= */
-function ConfigSection({ name, data, onUpdate }) {
+function ConfigSection({ name, data, onUpdate, cameras}) {
   const enabled = data.ENABLED?.[0] ?? true;
 
   return (
@@ -119,6 +173,7 @@ function ConfigSection({ name, data, onUpdate }) {
                 editable={editable}
                 enabled={key === "ENABLED" ? true : enabled}
                 onUpdate={onUpdate}
+                cameras={cameras}
               />
             </div>
           );
@@ -159,7 +214,15 @@ function ConfigSection({ name, data, onUpdate }) {
 ========================= */
 export default function ConfigPage() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(null);
+  const [cameras, setCameras] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    get_cameras()
+      .then((data) => setCameras(data.cameras))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetchConfig()
@@ -189,13 +252,42 @@ export default function ConfigPage() {
     }
   };
 
+  const load_default = async() => {
+    setStatus("Loading default config...");
+    fetchDefaultConfig()
+      .then((cfg) => Object.keys(cfg).length && setConfig(cfg))
+      .catch(() => {});
+    setStatus("Restored default config");
+  };
+
   return (
     <div style={styles.page}>
+      <button onClick={() => {
+        check_unsaved(config).
+          then(res => res.json()).
+          then(data => {
+            console.log(data.unsaved);
+            if (data.unsaved){
+              if (confirm("You have unsaved changes. Are you sure you want to leave?")){
+                navigate("/")
+              }
+            } else {
+              navigate("/");
+            }
+          });
+        }}>Back</button>
       <h1 style={styles.title}>System Configuration</h1>
 
       <button onClick={saveConfig} style={styles.saveBtn}>
         Save
       </button>
+
+      <button
+        onClick={load_default} style={styles.resetBtn}
+      >
+        Reset
+      </button>
+
       <span style={styles.status}>{status}</span>
 
       {Object.entries(config).map(([name, data]) => (
@@ -204,6 +296,7 @@ export default function ConfigPage() {
           name={name}
           data={data}
           onUpdate={updateValue}
+          cameras={cameras}
         />
       ))}
     </div>

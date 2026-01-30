@@ -17,7 +17,7 @@ class Core:
         self.logger = logger
         self.video_recorder = video_recorder(logger)
         self.socket_recorders = {}
-        self.config = ConfigManager({})
+        self.config = ConfigManager()
         self.logger.logger.info("[NODE-INFO] Core initialized")
         self.register_sockets()
         self.recording = False

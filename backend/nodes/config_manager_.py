@@ -1,49 +1,34 @@
 import json
-import jsonpatch
-from copy import deepcopy
+import os
 
 
 class ConfigManager:
-    def __init__(self, initial_config: dict):
-        self._config = deepcopy(initial_config)
-        self._undo_stack = []
-        self._redo_stack = []
+    def __init__(self):
+        self.root = "/home/dev/hlm_web/backend/.configs"
+        self.configs = {}
+        self.load('current.cfg')
 
-    @property
-    def config(self):
-        return deepcopy(self._config)
+    def get_ignore_case(self, d, key):
+        for k, v in d.items():
+            if k.lower() == key.lower():
+                return v
+        return {}
 
-    def apply(self, new_config: dict):
-        patch = jsonpatch.make_patch(self._config, new_config)
-        self._undo_stack.append(patch)
-        self._redo_stack.clear()
-        self._config = deepcopy(new_config)
-
-    def undo(self):
-        if not self._undo_stack:
-            return False
-
-        patch = self._undo_stack.pop()
-        inverse = patch.inverse()
-        self._redo_stack.append(patch)
-        self._config = inverse.apply(self._config)
-        return True
-
-    def redo(self):
-        if not self._redo_stack:
-            return False
-
-        patch = self._redo_stack.pop()
-        self._undo_stack.append(patch)
-        self._config = patch.apply(self._config)
-        return True
-
-    def save(self, path):
-        with open(path, "w") as f:
-            json.dump(self._config, f, indent=2)
-
-    def load(self, path):
+    def load(self, config_name: str = 'default.cfg'):
+        path = os.path.join(self.root, config_name)
+        if not os.path.exists(path):
+            return
         with open(path) as f:
-            self._config = json.load(f)
-        self._undo_stack.clear()
-        self._redo_stack.clear()
+            self.configs = json.load(f)
+
+    def save(self, conig):
+        path = os.path.join(self.root, 'current.cfg')
+        self.configs = conig
+        with open(path, "w") as f:
+            json.dump(self.configs, f, indent=2)
+
+    def get(self, path: str):
+        obj = self.configs
+        for key in path.split("."):
+            obj = self.get_ignore_case(obj, key)
+        return obj[0] if obj else None
