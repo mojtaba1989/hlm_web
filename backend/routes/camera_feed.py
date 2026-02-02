@@ -7,8 +7,7 @@ import asyncio
 import time
 
 from nodes.core import logger_ as logger
-from nodes.core import core_ as core
-from nodes.constants import FPS_INVERSE
+from nodes.core import config_ as config
 from nodes.utils import safe_call
 from nodes.camera_ import list_real_cameras
 
@@ -21,20 +20,24 @@ camera_thread = None
 camera_running = False
 
 def camera_loop():
-    global current_frame, camera_running, picam2
+    global current_frame, camera_running, picam2, config
     while camera_running:
         frame = picam2.capture_array()
         _, jpeg = cv2.imencode(".jpg", frame)
         with frame_lock:
             current_frame = jpeg.tobytes()
-        time.sleep(FPS_INVERSE)
+        time.sleep(1/config.get('camera.STREAMING_FRAMERATE'))
 
 def start_camera():
+    if not config.get('camera.ENABLED'):
+        return JSONResponse(content={"message": "Camera is disabled!"}, status_code=200)
+    if config.get('camera.Device_ID') is None:
+        return JSONResponse(content={"message": "Camera device ID not set!"}, status_code=200)
     global picam2, camera_thread, camera_running
     time.sleep(0.3)
-    picam2 = Picamera2()
-    config = picam2.create_preview_configuration(main={"size": (640, 480)})
-    picam2.configure(config)
+    picam2 = Picamera2(int(config.get('camera.Device_ID')[-1]))
+    config__ = picam2.create_preview_configuration(main={"size": tuple(config.get('camera.Streaming_resolution'))})
+    picam2.configure(config__)
     picam2.start()
     camera_running = True
     camera_thread = threading.Thread(target=camera_loop, daemon=True)
@@ -42,6 +45,8 @@ def start_camera():
     logger.logger.info("Video Stream: Running")
 
 def stop_camera():
+    if not config.get('camera.ENABLED'):
+        return JSONResponse(content={"message": "Camera is disabled!"}, status_code=200)
     global picam2, camera_running, current_frame, camera_thread
     if not camera_running:
         return JSONResponse(content={"message": "Camera is not running!"}, status_code=200)
@@ -80,7 +85,7 @@ async def mjpeg_generator(request: Request):
                 + frame +
                 b"\r\n"
             )
-            await asyncio.sleep(FPS_INVERSE)
+            await asyncio.sleep(1/config.get('camera.STREAMING_FRAMERATE'))
     finally:
         stop_camera()
 
@@ -102,10 +107,3 @@ async def stop():
 async def list_cameras():
     return {"cameras": list_real_cameras()}
 
-@router.get("/is_healthy")
-async def is_healthy():
-    return {"message": core.video_recorder.is_healthy}
-
-@router.get("/get_camera")
-async def is_recording():
-    return {"message": core.video_recorder.camera_device}

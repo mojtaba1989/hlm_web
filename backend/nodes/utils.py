@@ -18,6 +18,16 @@ class ErrorCodes(IntEnum):
 
     def desc(error_code):
         return ErrorCodes(error_code).name
+    
+class CameraErrorCodes(IntEnum):
+    SUCCESS = 0
+    CAMERA_DISABLED = 1
+    CAMERA_NOT_FOUND = 2
+    CAMERA_NOT_WORKING = 3
+    UNKNOWN_ERROR = 4
+
+    def desc(error_code):
+        return CameraErrorCodes(error_code).name
 
 def try_except(func):
     @wraps(func)
@@ -77,7 +87,10 @@ def get_size(file_name):
 class failed_loop_ctrl:
     def __init__(self, max_failed=-1):
         self.failed_to_get = 0
-        self.max_failed = -1 if int(max_failed) <= 0 else max_failed
+        if max_failed is None or int(max_failed) <= 0:
+            self.max_failed = -1 
+        else:
+            self.max_failed = max_failed
 
     def is_failed(self):
         return self.max_failed != -1 and self.failed_to_get >= self.max_failed

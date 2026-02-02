@@ -12,27 +12,30 @@ from nodes.config_manager_ import ConfigManager
 
 
 class Core:
-    def __init__(self, logger):
+    def __init__(self, logger, config):
         self.file_manager = FileManager(logger)
+        self.config = config
         self.logger = logger
-        self.video_recorder = video_recorder(logger)
+        self.video_recorder = video_recorder(logger, config)
         self.socket_recorders = {}
-        self.config = ConfigManager()
         self.logger.logger.info("[NODE-INFO] Core initialized")
         self.register_sockets()
         self.recording = False
 
     def register_sockets(self):
-        tmp = socket_recorder('10.0.0.105',
-                               port=5555,
-                               name='lux',
-                               logger=self.logger,
-                               max_failed=-1)
-        if not tmp.is_duplicate(self.socket_recorders):
-            self.socket_recorders['lux'] = {
-                'recorder': tmp,
-                'converter': DAQ_bin_to_csv
-            }
+        if self.config.get('DAQ.ENABLED'):
+            tmp = socket_recorder(self.config.get('DAQ.IP'),
+                                port=self.config.get('DAQ.PORT'),
+                                name='lux',
+                                logger=self.logger,
+                                max_failed=self.config.get('DAQ.Max_Failed_Attempts'),)
+            if not tmp.is_duplicate(self.socket_recorders):
+                self.socket_recorders['lux'] = {
+                    'recorder': tmp,
+                    'converter': DAQ_bin_to_csv
+                }
+            else:
+                self.logger.logger.error("Core: PORT ALREADY IN USE")
     
     @try_except
     def init_recording(self):
@@ -53,7 +56,7 @@ class Core:
             "log": os.path.join(path, 'log'),
             "csv": os.path.join(path, 'data.csv'),
             "video": os.path.join(path, 'camera_feed.mp4'),
-            "config": self.config.config
+            "config": self.config.configs
         }
         self.metafile = os.path.join(path, 'metadata.json')
     # TODO: check with config
@@ -83,7 +86,6 @@ class Core:
             self.socket_recorders[key]['recorder'].stop()
         self.video_recorder.convert_to_mp4()
         self.socket_recorders['lux']['converter'](self.metadata["csv"],self.logger)
-        self.writer = None
         self.metadata["duration"] = str(self.metadata["end_time"] - self.metadata["start_time"])
         self.metadata["end_time"] = self.metadata["end_time"].strftime("%Y-%m-%d %H:%M:%S")
         self.metadata["start_time"] = self.metadata["start_time"].strftime("%Y-%m-%d %H:%M:%S")
@@ -95,4 +97,5 @@ class Core:
         return
     
 logger_ = LoggerManager()
-core_ = Core(logger_)
+config_ = ConfigManager()
+core_ = Core(logger_, config_)

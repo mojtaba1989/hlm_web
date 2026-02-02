@@ -5,7 +5,7 @@ import time
 
 from nodes.utils import get_size
 
-def DAQ_bin_to_csv(csv_file_name, logger=None):
+def DAQ_bin_to_csv(csv_file_name, logger=None, config=None):
     if logger: logger.logger.info("DAQ BIN to CSV: Converting DAQ binary data to CSV...")
     if csv_file_name is None:
         if logger: logger.logger.error("DAQ BIN to CSV: No data found - No CSV file created")
@@ -34,12 +34,16 @@ def DAQ_bin_to_csv(csv_file_name, logger=None):
         if logger: logger.logger.error("DAQ BIN to CSV: No data found - No CSV file created")
         return
     data = np.vstack(rows)
+    header = ["time_nsec"]
+    for i in range(8):
+        header.append(config.get(f'DAQ.Channel_map.{i}')[0])
+    header = ",".join(header)
     np.savetxt(
         csv_file_name,
         data,
         delimiter=",",
         fmt=["%d"] + ["%.6f"] * 8,
-        header="time_nsec,ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8",
+        header=header,
         comments=""
     )
     if logger:
@@ -51,11 +55,12 @@ def DAQ_bin_to_csv(csv_file_name, logger=None):
     return
 
 class lux_streamer:
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, config=None):
         self.logger = logger
+        self.config = config
         self.socket = None
-        self.IP = "10.0.0.105"
-        self.PORT = 5555
+        self.IP = self.config.get('DAQ.IP')
+        self.PORT = self.config.get('DAQ.PORT')
         self.daq_format = '<128d'
         self.size = struct.calcsize(self.daq_format) + 4
         self.logger.logger.info("DAQ Stream: Node initialized")
@@ -64,8 +69,14 @@ class lux_streamer:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.IP, self.PORT))
         self.socket.settimeout(1)
-        self.failed_to_get = 0
-        self.logger.logger.info("DAQ Stream: Socket initialized")    
+        self.logger.logger.info("DAQ Stream: Socket initialized")
+
+    def pack_data(self, data=[0]*8):
+        tmp = {"ts": time.time()}
+        for i in range(8):
+            if self.config.get(f'DAQ.Channel_map.{i}')[0] != '':
+                tmp[self.config.get(f'DAQ.Channel_map.{i}')[0]] = data[i]
+        return tmp
 
     def get(self):
         if self.socket is None:
@@ -75,19 +86,13 @@ class lux_streamer:
             msg = self.socket.recv(2048)
         except socket.timeout:
             self.logger.logger.warning(f"DAQ Stream: Failed to acquire DAQ data - Please check connection")
-            json_data = {f"s{i}": 0 for i in range(8)}
-            json_data["ts"] = time.time()
-            return json_data
+            return self.pack_data()
         msg = self.socket.recv(2048)
         if len(msg) != self.size:
-            json_data = {f"s{i}": 0 for i in range(8)}
-            json_data["ts"] = time.time()
-            return json_data
+            return self.pack_data()
         arr = np.frombuffer(msg[4:], dtype=">f8").reshape(8, 16)
         arr = np.mean(arr, axis=1).tolist()
-        json_data = {f"s{i}": arr[i] for i in range(8)}
-        json_data["ts"] = time.time()
-        return json_data
+        return self.pack_data(arr)
     
     def stop(self):
         if self.socket:

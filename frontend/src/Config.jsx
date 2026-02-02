@@ -68,26 +68,23 @@ function TextInput({ value, disabled, onChange }) {
   );
 }
 
-function CameraInput({value, disabled, onChange, cameras}) {
+function CameraInput({ value, disabled, onChange, cameras }) {
   return (
     <select
-      value={value}
+      value={value ?? ""}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       style={styles.select}
     >
-      {cameras.length === 0 ? (
-          <option>Loading cameras...</option>
-        ) : (
-          cameras.map(([path, name]) => (
-            <option key={path} value={path}>
-              {name}
-            </option>
-          ))
-        )}
+      {cameras.map((cam) => (
+        <option key={cam.id} value={cam.path}>
+          {cam.name}
+        </option>
+      ))}
     </select>
   );
 }
+
 
 /* =========================
    Field renderer
@@ -115,7 +112,7 @@ function ConfigField({
     );
   }
 
-  if (field === "Devide_ID"){
+  if (field === "DEVICE_ID") {
     return (
       <CameraInput
         value={value}
@@ -266,7 +263,6 @@ export default function ConfigPage() {
         check_unsaved(config).
           then(res => res.json()).
           then(data => {
-            console.log(data.unsaved);
             if (data.unsaved){
               if (confirm("You have unsaved changes. Are you sure you want to leave?")){
                 navigate("/")
@@ -299,6 +295,9 @@ export default function ConfigPage() {
           cameras={cameras}
         />
       ))}
+
+      {/* for debugging */}
+      {/* <pre>{JSON.stringify(config, null, 2)}</pre> */}
     </div>
   );
 }
