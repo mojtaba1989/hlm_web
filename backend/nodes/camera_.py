@@ -146,7 +146,7 @@ class video_recorder:
             self.error("AVI -> MP4: Video recorder file name not set")
             return
         avi_file = self.file_name.replace(".mp4", ".avi")
-        if not os.path.exists(self.avi_file):
+        if not os.path.exists(avi_file):
             self.error("AVI -> MP4: Video recorder file not found")
             return
         cmd = [

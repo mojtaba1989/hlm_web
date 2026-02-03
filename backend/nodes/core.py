@@ -28,7 +28,7 @@ class Core:
                                 port=self.config.get('DAQ.PORT'),
                                 name='lux',
                                 logger=self.logger,
-                                max_failed=self.config.get('DAQ.Max_Failed_Attempts'),)
+                                max_failed=self.config.get('DAQ.MAX_FAILURES'),)
             if not tmp.is_duplicate(self.socket_recorders):
                 self.socket_recorders['lux'] = {
                     'recorder': tmp,
@@ -85,7 +85,7 @@ class Core:
         for key in self.socket_recorders:
             self.socket_recorders[key]['recorder'].stop()
         self.video_recorder.convert_to_mp4()
-        self.socket_recorders['lux']['converter'](self.metadata["csv"],self.logger)
+        self.socket_recorders['lux']['converter'](self.metadata["csv"],self.logger, self.config)
         self.metadata["duration"] = str(self.metadata["end_time"] - self.metadata["start_time"])
         self.metadata["end_time"] = self.metadata["end_time"].strftime("%Y-%m-%d %H:%M:%S")
         self.metadata["start_time"] = self.metadata["start_time"].strftime("%Y-%m-%d %H:%M:%S")

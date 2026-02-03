@@ -1,7 +1,7 @@
 export const styles = {
   page: {
     padding: 24,
-    background: "#f4f6f8",
+    background: "#ffffff",
     minHeight: "100vh",
     color: "#222", // ✅ FIX
     fontFamily: "Arial, sans-serif",

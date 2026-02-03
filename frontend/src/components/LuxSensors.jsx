@@ -1,6 +1,5 @@
-import React, { useEffect, useState} from "react";
+import { useEffect, useState} from "react";
 import LuxSensorsView from "../views/LuxSensorsView";
-import axios from "axios";
 
 const LuxSensors = ({enabled}) => {
     const [data, setData] = useState([]);
@@ -17,10 +16,14 @@ const LuxSensors = ({enabled}) => {
         }
         const eventSource = new EventSource(`${backendUrl}/api/lux_sensors/stream`);
         eventSource.onmessage = (event) => {
-            const { s0, s1, s2, s3, s4, s5, s6, s7 } = JSON.parse(event.data);
+            const payload = JSON.parse(event.data);
             const now = Date.now();
-            setData((prev)=>
-                [...prev, {t: now, s0, s1, s2, s3, s4, s5, s6, s7}].filter((v) => now - v.t < 10000)
+
+            setData((prev) =>
+                [
+                    ...prev,
+                    { t: now, ...payload}
+                ].filter((v) => now - v.t < 10000)
             );
         };
         eventSource.onerror = (err) => {

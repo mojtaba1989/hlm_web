@@ -5,6 +5,7 @@ import shutil
 import zipfile
 import os
 from fastapi.responses import FileResponse
+import json
 
 router = APIRouter()
 
@@ -25,9 +26,23 @@ def list_folders(subpath: str = ""):
     folders = []
     for p in target.iterdir():
         if p.is_dir() and p.name != "current":
+            metadata_file = p / "metadata.json"
+            duration = "--:--"
+            if metadata_file.exists():
+                try:
+                    with open(metadata_file, "r") as f:
+                        meta_data = json.load(f)
+                        # Extract duration (stripping microseconds for the UI)
+                        raw_duration = meta_data.get("duration", "--:--")
+                        duration = raw_duration.split(".")[0] 
+                except (json.JSONDecodeError, IOError):
+                    # Fallback if file is corrupt or unreadable
+                    duration = "Error"
             folders.append({
-                "name": p.name
+                "name": p.name,
+                "duration": duration
             })
+
 
     return {
         "path": str(target.relative_to(BASE_DIR)),

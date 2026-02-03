@@ -25,6 +25,8 @@ def sensor_loop():
 @router.get("/stream")
 def stream():
     global sensor_running
+    if not config.get('DAQ.ENABLED'):
+        return {"message": "DAQ not enabled"}
     sensor_running = True
     return StreamingResponse(
         sensor_loop(),
@@ -33,6 +35,8 @@ def stream():
 @router.get("/stop")
 def stop():
     global sensor_running, lux_streamer
+    if not config.get('DAQ.ENABLED'):
+        return {"message": "DAQ not enabled"}
     sensor_running = False
     lux_streamer.stop()
     return {"message": "Sensor stopped!"}

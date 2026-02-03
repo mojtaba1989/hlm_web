@@ -36,7 +36,10 @@ def DAQ_bin_to_csv(csv_file_name, logger=None, config=None):
     data = np.vstack(rows)
     header = ["time_nsec"]
     for i in range(8):
-        header.append(config.get(f'DAQ.Channel_map.{i}')[0])
+        tag = config.get(f'DAQ.Channel_map.{i}')
+        if tag is None or tag == "":
+            tag = f'Null_{i}'
+        header.append(tag)
     header = ",".join(header)
     np.savetxt(
         csv_file_name,
@@ -72,10 +75,11 @@ class lux_streamer:
         self.logger.logger.info("DAQ Stream: Socket initialized")
 
     def pack_data(self, data=[0]*8):
-        tmp = {"ts": time.time()}
+        tmp = {}
+        # tmp = {"ts": time.time()}
         for i in range(8):
-            if self.config.get(f'DAQ.Channel_map.{i}')[0] != '':
-                tmp[self.config.get(f'DAQ.Channel_map.{i}')[0]] = data[i]
+            if self.config.get(f'DAQ.Channel_map.{i}') != '':
+                tmp[self.config.get(f'DAQ.Channel_map.{i}')] = data[i]
         return tmp
 
     def get(self):
@@ -85,6 +89,9 @@ class lux_streamer:
         try:
             msg = self.socket.recv(2048)
         except socket.timeout:
+            self.logger.logger.warning(f"DAQ Stream: Failed to acquire DAQ data - Please check connection")
+            return self.pack_data()
+        except:
             self.logger.logger.warning(f"DAQ Stream: Failed to acquire DAQ data - Please check connection")
             return self.pack_data()
         msg = self.socket.recv(2048)

@@ -1,109 +1,103 @@
-from fastapi import Request, APIRouter
-from fastapi.responses import StreamingResponse, JSONResponse
-from picamera2 import Picamera2
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 import cv2
 import threading
-import asyncio
 import time
 
 from nodes.core import logger_ as logger
 from nodes.core import config_ as config
-from nodes.utils import safe_call
 from nodes.camera_ import list_real_cameras
 
 router = APIRouter()
 
-picam2 = None
-frame_lock = threading.Lock()
-current_frame = None
-camera_thread = None
-camera_running = False
+class CameraStream:
+    def __init__(self):
+        self.cam = None
+        self.running = False
+        self.lock = threading.Lock()
 
-def camera_loop():
-    global current_frame, camera_running, picam2, config
-    while camera_running:
-        frame = picam2.capture_array()
-        _, jpeg = cv2.imencode(".jpg", frame)
-        with frame_lock:
-            current_frame = jpeg.tobytes()
-        time.sleep(1/config.get('camera.STREAMING_FRAMERATE'))
+    def start(self):
+        if not config.get('camera.enabled') or not config.get('camera.device_id'):
+            logger.logger.warning("Camera Stream: Camera not enabled")
+            return
+        
+        with self.lock:
+            if self.running:
+                logger.logger.warning("Camera Stream: Camera already running")
+                return
+            
+            self.cam = cv2.VideoCapture(config.get('camera.device_id'),
+                                         cv2.CAP_V4L2)
+            wh = config.get('camera.STREAMING_RESOLUTION')
+            self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, wh[0])
+            self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, wh[1])
+            self.cam.set(cv2.CAP_PROP_FPS, config.get('camera.STREAMING_FRAMERATE'))
+            self.cam.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            self.running = True
+            for _ in range(5):
+                ret, _ = self.cam.read()
+                if not ret:
+                    break
 
-def start_camera():
-    if not config.get('camera.ENABLED'):
-        return JSONResponse(content={"message": "Camera is disabled!"}, status_code=200)
-    if config.get('camera.Device_ID') is None:
-        return JSONResponse(content={"message": "Camera device ID not set!"}, status_code=200)
-    global picam2, camera_thread, camera_running
-    time.sleep(0.3)
-    picam2 = Picamera2(int(config.get('camera.Device_ID')[-1]))
-    config__ = picam2.create_preview_configuration(main={"size": tuple(config.get('camera.Streaming_resolution'))})
-    picam2.configure(config__)
-    picam2.start()
-    camera_running = True
-    camera_thread = threading.Thread(target=camera_loop, daemon=True)
-    camera_thread.start()
-    logger.logger.info("Video Stream: Running")
+            time.sleep(0.05)
+            logger.logger.info("Camera Stream: Camera started")
 
-def stop_camera():
-    if not config.get('camera.ENABLED'):
-        return JSONResponse(content={"message": "Camera is disabled!"}, status_code=200)
-    global picam2, camera_running, current_frame, camera_thread
-    if not camera_running:
-        return JSONResponse(content={"message": "Camera is not running!"}, status_code=200)
+    def stop(self):
+        with self.lock:
+            self.running = False
+            if self.cam:
+                self.cam.release()
+                self.cam = None
+                logger.logger.info("Camera Stream: Camera stopped")
 
-    camera_running = False
-    time.sleep(0.2)
-    safe_call(picam2.stop, label="close picam2")
-    current_frame = None
-    camera_thread = None
-    picam2.close()
-    picam2 = None
-    time.sleep(15)
-    logger.logger.info("Video Stream: Camera stopped")
-    return JSONResponse(content={"message": "Camera stopped!"}, status_code=200)
+    def generate_frames(self):
+        try:
+            for _ in range(2):
+                if not self.running:
+                    return
+                self.cam.read()
+
+            while True:
+                if not self.running or not self.cam:
+                    break
+
+                success, frame = self.cam.read()
+                if not success:
+                    break
+
+                ret, buffer = cv2.imencode('.jpg', frame)
+                if not ret:
+                    continue
+
+                frame_bytes = buffer.tobytes()
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n"
+                    + frame_bytes +
+                    b"\r\n"
+                )
+
+                time.sleep(1 / config.get('camera.STREAMING_FRAMERATE'))
+        finally:
+            self.stop()
 
 
-# Async Streaming
-async def mjpeg_generator(request: Request):
-    global current_frame
-
-    try:
-        while camera_running:
-            with frame_lock:
-                if current_frame is None:
-                    frame = None
-                else:
-                    frame = current_frame
-
-            if frame is None:
-                await asyncio.sleep(0.01)
-                continue
-
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n"
-                + frame +
-                b"\r\n"
-            )
-            await asyncio.sleep(1/config.get('camera.STREAMING_FRAMERATE'))
-    finally:
-        stop_camera()
-
+CAM = CameraStream()
 
 @router.get("/stream")
-async def stream(request: Request):
-    start_camera()
+def video_feed():
+    CAM.start()
+    time.sleep(0.1)
     return StreamingResponse(
-        mjpeg_generator(request),
+        CAM.generate_frames(),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
 
 @router.get("/stop")
-async def stop():
-    stop_camera()
+def stop():
+    CAM.stop()
     return {"message": "Camera stopped!"}
 
 @router.get("/cameras")
 async def list_cameras():
     return {"cameras": list_real_cameras()}
-
