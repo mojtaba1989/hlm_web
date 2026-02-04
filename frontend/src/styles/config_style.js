@@ -1,123 +1,120 @@
-export const styles = {
+export const configStyles = {
   page: {
-    padding: 24,
-    background: "#ffffff",
-    minHeight: "100vh",
-    color: "#222", // ✅ FIX
-    fontFamily: "Arial, sans-serif",
+    height: "100vh",      // Lock to exactly screen height
+    width: "100%",       // Lock to exactly screen width
+    // display: "flex",
+    // flexDirection: "column",
+    overflow: "auto",   // Disables global scrollbars
+    background: "#0f0f0f", // Slightly darker for better contrast
+    color: "#e0e0e0",
+    fontFamily: "'Inter', -apple-system, sans-serif",
   },
-  title: {
-    marginBottom: 20,
-    color: "#111",
+  header: {
+    height: "60px",       // Fixed height
+    flexShrink: 0,        // Prevents header from collapsing
+    background: "#1a1a1a",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 20px",
+    borderBottom: "1px solid #333",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.5)",
   },
+  headerLeft: { display: "flex", alignItems: "center", gap: "20px" },
+  title: { fontSize: "20px", fontWeight: "700", margin: 0 },
+  
+  container: {
+    maxWidth: "900px",
+    margin: "30px auto",
+    padding: "0 20px",
+  },
+
+  // Button Improvements
+  saveBtn: {
+    padding: "10px 20px",
+    backgroundColor: "#0984e3", // Vibrant Blue
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "background 0.2s",
+    fontSize: "16px",
+    "&:hover": {
+      backgroundColor: "#b3006e",
+    }
+  },
+  resetBtn: {
+    padding: "10px 20px",
+    backgroundColor: "#3acabe", // Vibrant Blue
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "background 0.2s",
+    fontSize: "16px",
+    marginRight: "20px",
+  },
+  backBtn: {
+    background: "none",
+    border: "none",
+    color: "#0984e3",
+    cursor: "pointer",
+    fontSize: "20px",
+    fontWeight: "600",
+  },
+
+  // Section/Card Styling
   section: {
     background: "#ffffff",
-    padding: 16,
-    borderRadius: 6,
-    marginBottom: 16,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    color: "#333",
-  },
-  subSection: {
-    marginTop: 12,
-    paddingLeft: 10,
-    borderLeft: "3px solid #ddd",
-  },
-  subTitle: {
-    fontWeight: "bold",
-    marginBottom: 6,
+    padding: "24px",
+    borderRadius: "12px",
+    marginBottom: "20px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    border: "1px solid #edf2f7",
+    fontSize: "16px",
+    // color: "#333",
   },
   row: {
     display: "flex",
     alignItems: "center",
-    marginBottom: 8,
+    paddingVertical: "12px",
+    borderBottom: "1px solid #f1f2f6",
+    marginBottom: "12px",
   },
   label: {
-    width: 180,
-    fontWeight: 500,
-    color: "#222",
+    flex: "0 0 240px",
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#636e72",
   },
   input: {
     flex: 1,
-    padding: "6px 8px",
-    border: "1px solid #ccc",
-    borderRadius: 4,
-    color: "#111",
-    background: "#fff",
+    padding: "10px 12px",
+    border: "1px solid #dfe6e9",
+    borderRadius: "6px",
+    fontSize: "14px",
+    outline: "none",
+    transition: "border-color 0.2s",
+    "&:focus": { borderColor: "#0984e3" }
   },
-  select: {
-    flex: 1,
-    padding: "6px 8px",
-    borderRadius: 4,
+  status: {
+    marginRight: "15px",
+    fontSize: "13px",
+    color: "#00b894", // Success green
+    fontWeight: "500"
   },
-  readonly: {
-    flex: 1,
-    color: "#777",
-    fontStyle: "italic",
-  },
-  preview: {
-    marginTop: 20,
-    padding: 12,
-    background: "#eaeaea",
-    borderRadius: 4,
-    fontSize: 12,
-    color: "#111",
-  },
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(0,0,0,0.45)",
+  footer: {
+    height: "30px",
+    flexShrink: 0,
+    background: "#0f0f0f",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1000,
-  },
-  popup: {
-    backgroundColor: "#fff",
-    padding: "20px",
-    borderRadius: "8px",
-    minWidth: "300px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-  },
-
-  title: {
-    margin: "0 0 10px 0",
-    fontSize: "18px",
-    fontWeight: 600,
-  },
-
-  message: {
-    marginBottom: "20px",
-    fontSize: "14px",
+    fontSize: "11px",
     color: "#444",
-  },
-
-  actions: {
-    display: "flex",
-    justifyContent: "flex-end",
     gap: "10px",
-  },
-
-  yesButton: {
-    padding: "6px 14px",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    backgroundColor: "#d32f2f",
-    color: "#fff",
-    fontWeight: 500,
-  },
-
-  noButton: {
-    padding: "6px 14px",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    backgroundColor: "#e0e0e0",
-    color: "#333",
-    fontWeight: 500,
-  },
+    borderTop: "1px solid #222",
+  }
 };

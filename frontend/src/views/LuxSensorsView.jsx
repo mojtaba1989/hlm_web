@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { sensorStyles } from "../styles/sensor_style";
 import {
   LineChart,
   Line,
@@ -49,90 +50,76 @@ const LuxSensorsView = ({ data }) => {
   if (!hasData) {
     return <div style={{ height: 360 }}>Waiting for data…</div>;
   }
-
-  return (
-    <div style={{ width: "100%", height: 360 }}>
+  return(
+    <div style={sensorStyles.container}>
       {/* ---------- Control panel ---------- */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 12,
-          padding: "6px 10px",
-          borderBottom: "1px solid #ddd",
-          background: "#fafafa",
-          fontSize: 13,
-        }}
-      >
-        {signalNames.map((name) => (
-          <label
-            key={name}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              cursor: "pointer",
-              color: visible[name] ? "#000" : "#aaa",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={!!visible[name]}
-              onChange={() =>
-                setVisible((v) => ({
-                  ...v,
-                  [name]: !v[name],
-                }))
-              }
-            />
-            <span style={{ color: hashColor(name) }}>●</span>
-            {name}
-          </label>
-        ))}
+      <div style={sensorStyles.controlPanel}>
+        <div style={sensorStyles.checkboxGroup}>
+          {signalNames.map((name) => (
+            <label key={name} style={sensorStyles.label(visible[name])}>
+              <input
+                type="checkbox"
+                style={sensorStyles.checkbox}
+                checked={!!visible[name]}
+                onChange={() =>
+                  setVisible((v) => ({ ...v, [name]: !v[name] }))
+                }
+              />
+              <span style={{ color: hashColor(name), fontSize: '18px' }}>●</span>
+              {name}
+            </label>
+          ))}
+        </div>
 
-        {/* Optional controls */}
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <button
-            onClick={() =>
-              setVisible(
-                Object.fromEntries(signalNames.map((n) => [n, true]))
-              )
-            }
-          >
-            All
-          </button>
-          <button
-            onClick={() =>
-              setVisible(
-                Object.fromEntries(signalNames.map((n) => [n, false]))
-              )
-            }
-          >
-            None
-          </button>
+        <div style={sensorStyles.actionGroup}>
+          <button onClick={() => setVisible(Object.fromEntries(signalNames.map(n => [n, true])))} style={sensorStyles.miniBtn}>All</button>
+          <button onClick={() => setVisible(Object.fromEntries(signalNames.map(n => [n, false])))} style={sensorStyles.miniBtn}>None</button>
         </div>
       </div>
 
-      {/* ---------- Chart ---------- */}
-      <div style={{ width: "100%", height: 300, minHeight: 300 }}>
+      {/* ---------- Chart Area ---------- */}
+      <div style={sensorStyles.chartWrapper}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <XAxis
               dataKey="t"
-              tickFormatter={(t) =>
-                ((Date.now() - t) / 1000).toFixed(1)
-              }
+              stroke="#ffffff"
+              tick={{ fontSize: 10 }}
+              label={{ value: "Time",
+                 offset: 0,
+                 position: "insideBottom",
+                 fontSize: 12,
+                 fill: '#ffffff' }}
+              tickFormatter={(t) => ((Date.now() - t) / 1000).toFixed(1) + "s"}
             />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-
+            <YAxis 
+              stroke="#ffffff"
+              tick={{ fontSize: 10, fill: '#ffffff' }} 
+              /* Increase width to give the rotated label room to breathe */
+              width={60} 
+              label={{ 
+                value: "Lux",
+                angle: -90, 
+                // position: 'outLeft',
+                /* Offset pulls the text away from the center of the axis */
+                offset: 0,
+                style: { 
+                  textAnchor: 'middle', 
+                  fill: '#ffffff', 
+                  fontSize: 10,
+                  fontWeight: '600'
+                }
+              }}
+            />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', fontSize: '12px' }}
+              itemStyle={{ padding: '2px 0' }}
+            />
             {signalNames.map((name) =>
               visible[name] ? (
                 <Line
                   key={name}
                   dataKey={name}
-                  name={name}
                   stroke={hashColor(name)}
                   dot={false}
                   strokeWidth={2}

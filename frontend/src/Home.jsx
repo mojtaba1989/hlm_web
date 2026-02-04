@@ -1,5 +1,6 @@
-import React , {useState, useEffect} from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {useState} from "react";
+import { useNavigate } from "react-router-dom";
+import { homeStyles } from "./styles/home_style";
 
 import WebcamView from "./components/CameraFeed";
 import LuxSensors from "./components/LuxSensors";
@@ -41,60 +42,83 @@ export default function HomePage() {
             console.error("Streaming toggle failed:", err);
         }
     };
+    return(
+        <div style={homeStyles.page}>
+            {/* Header / Top Control Bar */}
+            <header style={homeStyles.header}>
+                <div style={homeStyles.brand}>
+                <h2 style={{ margin: 0, fontSize: "1.2rem" }}>Head Light Control Suite</h2>
+                <span style={homeStyles.liveIndicator(streaming)}>
+                    {streaming ? "● LIVE" : "○ OFFLINE"}
+                </span>
+                </div>
 
-    return (
-        <div>
-            <button
-                onClick={toggleStreaming}
-                disabled={disabled}
-                style={{
-                    backgroundColor: streaming ? "#b22222" : "#226d8b",
-                    color: "white",
-                    padding: "10px 16px",
-                    fontWeight: "bold"
-                }}>
-                {streaming ? "Stop Live Feed" : "Start Live Feed"}
-            </button>
+                <div style={homeStyles.buttonGroup}>
+                <button onClick={toggleStreaming} disabled={disabled} style={homeStyles.actionBtn(streaming, "#0984e3")}>
+                    {streaming ? "Stop Live Feed" : "Start Live Feed"}
+                </button>
+                <button onClick={toggleRecording} disabled={disabled} style={homeStyles.actionBtn(recording, "#27ae60")}>
+                    {recording ? "Stop Recording" : "Start Recording"}
+                </button>
+                <button onClick={() => navigate("/records")} style={homeStyles.navBtn}>
+                    Browse Recordings
+                </button>
+                <button onClick={() => navigate("/config")} style={homeStyles.navBtn}>
+                    Configuration
+                </button>
+                </div>
+            </header>
 
-            <button
-                onClick={toggleRecording}
-                disabled={disabled} 
-                style={{
-                    backgroundColor: recording ? "#b22222" : "#228b22",
-                    color: "white",
-                    padding: "10px 16px",
-                    fontWeight: "bold"
-                }}>
-                {recording ? "Stop Recording" : "Start Recording"}
-            </button>
+            {/* Main Fixed Grid */}
+            <main style={homeStyles.grid}>
+              {/* TOP LEFT: Camera */}
+              <section style={{ ...homeStyles.panel, gridArea: "video" }}>
+                <div style={homeStyles.panelHeader}>Live Stream (640x480)</div>
+                <div style={homeStyles.viewport}>
+                    <div style={homeStyles.videoWrapper}>
+                        <WebcamView enabled={streaming} />
+                    </div>
+                </div>
+              </section>
 
-            <button
-                onClick={() => navigate("/records")}
-                style={{
-                    backgroundColor: "#226d8b",
-                    color: "white",
-                    padding: "10px 16px",
-                    fontWeight: "bold"
-                }}>
-                Recordings
-            </button>
-            <button
-                onClick={() => navigate("/config")}
-                style={{
-                    backgroundColor: "#226d8b",
-                    color: "white",
-                    padding: "10px 16px",
-                    fontWeight: "bold"
-                }}>
-                Configuration
-            </button>
+              {/* TOP RIGHT: Test Config Placeholder */}
+              <section style={{ ...homeStyles.panel, gridArea: "test" }}>
+                <div style={homeStyles.panelHeader}>Test Configuration</div>
+                <div style={homeStyles.placeholder}>
+                <p style={{ fontWeight: 'bold', color: '#888' }}>Diagnostic Overrides</p>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <button disabled style={{ opacity: 0.5 }}>LED Test</button>
+                    <button disabled style={{ opacity: 0.5 }}>Fan Pulse</button>
+                </div>
+                </div>
+              </section>
 
-            <h3>Status: {streaming ? "LIVE" : "STOPPED"}</h3>
-            <LoggerFeed/>
-            <WebcamView enabled={streaming}/>
-            <LuxSensors enabled={streaming}/>
-            
+              {/* BOTTOM LEFT: Sensors */}
+              <section style={{ ...homeStyles.panel, gridArea: "sensors" }}>
+                <div style={homeStyles.panelHeader}>Sensor Telemetry</div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+                <LuxSensors enabled={streaming} />
+                </div>
+              </section>
+
+              {/* BOTTOM RIGHT: Logs */}
+              <section style={{ ...homeStyles.panel, gridArea: "logs" }}>
+                <div style={homeStyles.panelHeader}>System Logs</div>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                <LoggerFeed />
+                </div>
+              </section>
+            </main>
+
+            <footer style={homeStyles.footer}>
+              <span style={{ color: "#2f80ed", fontWeight: "800" }}>ACM</span>
+              <span style={{ margin: "0 8px", color: "#ffffff" }}>|</span>
+              <span style={{ color: "#ffffff" }}>
+                  Powered by <strong style={{ color: "#ffcc00", fontWeight: "700" }}>MTU</strong>
+              </span>
+              <span style={{ marginLeft: "8px", color: "#ffffff" }}>© 2026</span>
+            </footer>
         </div>
-    );
 
+    );
 }

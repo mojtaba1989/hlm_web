@@ -1,6 +1,6 @@
 import { use, useEffect, useState } from "react";
 // import { CONFIG as DEFAULT_CONFIG } from "./config_files/config";
-import { styles } from "./styles/config_style";
+import { configStyles } from "./styles/config_style";
 import { useNavigate } from "react-router-dom";
 
 const DEFAULT_CONFIG = {};
@@ -46,7 +46,7 @@ function BooleanSelect({ value, disabled, onChange }) {
       value={String(value)}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value === "true")}
-      style={styles.select}
+      style={configStyles.select}
     >
       <option value="true">TRUE</option>
       <option value="false">FALSE</option>
@@ -61,7 +61,7 @@ function TextInput({ value, disabled, onChange }) {
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        ...styles.input,
+        ...configStyles.input,
         opacity: disabled ? 0.45 : 1,
       }}
     />
@@ -74,7 +74,7 @@ function CameraInput({ value, disabled, onChange, cameras }) {
       value={value ?? ""}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
-      style={styles.select}
+      style={configStyles.select}
     >
       {cameras.map((cam) => (
         <option key={cam.id} value={cam.path}>
@@ -99,7 +99,7 @@ function ConfigField({
   cameras
 }) {
   if (!editable) {
-    return <span style={styles.readonly}>{String(value)}</span>;
+    return <span style={configStyles.readonly}>{String(value)}</span>;
   }
 
   if (typeof value === "boolean") {
@@ -151,18 +151,18 @@ function ConfigSection({ name, data, onUpdate, cameras}) {
   return (
     <div
       style={{
-        ...styles.section,
-        // opacity: enabled ? 1 : 0.45,
+        ...configStyles.section,
+        backgroundColor: enabled ? "white" :  "#f2f2f2",
       }}
     >
-      <h2 style={styles.sectionTitle}>{name}</h2>
+      <h2 style={{...configStyles.sectionTitle, color: enabled ? "black" : "gray"}}>{name}</h2>
 
       {Object.entries(data).map(([key, val]) => {
         if (Array.isArray(val)) {
           const [value, editable] = val;
           return (
-            <div key={key} style={styles.row}>
-              <label style={styles.label}>{key}</label>
+            <div key={key} style={configStyles.row}>
+              <label style={configStyles.label}>{key}</label>
               <ConfigField
                 section={name}
                 field={key}
@@ -178,13 +178,13 @@ function ConfigSection({ name, data, onUpdate, cameras}) {
 
         // nested (Channel_map)
         return (
-          <div key={key} style={styles.subSection}>
-            <div style={styles.subTitle}>{key}</div>
+          <div key={key} style={configStyles.section}>
+            <div style={{...configStyles.subTitle, color: enabled ? "black" : "gray"}}>{key}</div>
             {Object.entries(val).map(([subKey, subVal]) => {
               const [value, editable] = subVal;
               return (
-                <div key={subKey} style={styles.row}>
-                  <label style={styles.label}>{subKey}</label>
+                <div key={subKey} style={configStyles.row}>
+                  <label style={configStyles.label}>{subKey}</label>
                   {editable ? (
                     <TextInput
                       value={value}
@@ -194,7 +194,7 @@ function ConfigSection({ name, data, onUpdate, cameras}) {
                       }
                     />
                   ) : (
-                    <span style={styles.readonly}>{value}</span>
+                    <span style={configStyles.readonly}>{value}</span>
                   )}
                 </div>
               );
@@ -257,47 +257,54 @@ export default function ConfigPage() {
     setStatus("Restored default config");
   };
 
-  return (
-    <div style={styles.page}>
-      <button onClick={() => {
-        check_unsaved(config).
-          then(res => res.json()).
-          then(data => {
-            if (data.unsaved){
-              if (confirm("You have unsaved changes. Are you sure you want to leave?")){
-                navigate("/")
-              }
-            } else {
-              navigate("/");
-            }
-          });
-        }}>Back</button>
-      <h1 style={styles.title}>System Configuration</h1>
+  const handleBack = () => {
+    check_unsaved(config)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.unsaved) {
+          if (window.confirm("You have unsaved changes, are you sure you want to leave?")) {
+            navigate("/");
+          }
+        } else {
+          navigate("/");
+        }
+      })
+  };
 
-      <button onClick={saveConfig} style={styles.saveBtn}>
-        Save
-      </button>
+  return(
+    <div style={configStyles.page}>
+      <header style={configStyles.header}>
+        <div style={configStyles.headerLeft}>
+          <button style={configStyles.backBtn} onClick={handleBack}>← Back</button>
+          <h1 style={configStyles.title}>System Configuration</h1>
+        </div>
+        <div style={configStyles.headerActions}>
+          <span style={configStyles.status}>{status}</span>
+          <button onClick={load_default} style={configStyles.resetBtn}>Reset to Default</button>
+          <button onClick={saveConfig} style={configStyles.saveBtn}>Save Changes</button>
+        </div>
+      </header>
 
-      <button
-        onClick={load_default} style={styles.resetBtn}
-      >
-        Reset
-      </button>
+      <main style={configStyles.container}>
+        {Object.entries(config).map(([name, data]) => (
+          <ConfigSection
+            key={name}
+            name={name}
+            data={data}
+            onUpdate={updateValue}
+            cameras={cameras}
+          />
+        ))}
+      </main>
 
-      <span style={styles.status}>{status}</span>
-
-      {Object.entries(config).map(([name, data]) => (
-        <ConfigSection
-          key={name}
-          name={name}
-          data={data}
-          onUpdate={updateValue}
-          cameras={cameras}
-        />
-      ))}
-
-      {/* for debugging */}
-      {/* <pre>{JSON.stringify(config, null, 2)}</pre> */}
+      <footer style={configStyles.footer}>
+        <span style={{ color: "#2f80ed", fontWeight: "800" }}>ACM</span>
+        <span style={{ margin: "0 8px", color: "#ffffff" }}>|</span>
+        <span style={{ color: "#ffffff" }}>
+            Powered by <strong style={{ color: "#ffcc00", fontWeight: "700" }}>MTU</strong>
+        </span>
+        <span style={{ marginLeft: "8px", color: "#ffffff" }}>© 2026</span>
+      </footer>
     </div>
   );
 }

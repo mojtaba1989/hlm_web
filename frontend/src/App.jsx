@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./Home";
-import FolderBrowser from "./components/RecordingsBrowser";
+import FolderBrowser from "./RecordingsBrowser";
 import ConfigPage from "./Config";
 import './App.css'
 
