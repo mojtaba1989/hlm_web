@@ -11,7 +11,7 @@ BACKEND_PID=$!
 
 echo "Starting frontend (React)..."
 cd ../frontend
-npm start &
+npm run dev &
 FRONTEND_PID=$!
 
 trap "echo 'Stopping...'; kill $BACKEND_PID $FRONTEND_PID" SIGINT SIGTERM

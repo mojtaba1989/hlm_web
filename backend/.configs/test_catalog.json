@@ -1,0 +1,221 @@
+{
+  "inputs": {
+    "rtk_columns": {
+      "Time (GPS s)": {
+        "primary": "[Tag 0 SN41790 Real-Time]Time (GPS s)",
+        "alternates": []
+      },
+      "Latitude (deg)": {
+        "primary": "[Tag 0 SN41790 Real-Time]Latitude (deg)",
+        "alternates": []
+      },
+      "Longitude (deg)": {
+        "primary": "[Tag 0 SN41790 Real-Time]Longitude (deg)",
+        "alternates": []
+      },
+      "Altitude (m)": {
+        "primary": "[Tag 0 SN41790 Real-Time]Altitude (m)",
+        "alternates": []
+      },
+      "Pitch (deg)": {
+        "primary": "[Tag 0 SN41790 Real-Time]Pitch (deg)",
+        "alternates": []
+      },
+      "Roll (deg)": {
+        "primary": "[Tag 0 SN41790 Real-Time]Roll (deg)",
+        "alternates": []
+      },
+      "Velocity forward": {
+        "primary": "[Tag 0 SN41790 Real-Time]Velocity forward (km/h)",
+        "alternates": [
+          "[Tag 0 SN41790 Real-Time]Velocity forward (m/s)"
+        ]
+      },
+      "Target 1 ISO resultant range (m)": {
+        "primary": "[Tag 1 SN Range]Target 1 ISO resultant range (m)",
+        "alternates": [
+          "[Tag 2 SN Range]Target 1 ISO resultant range (m)"
+        ]
+      }
+    },
+    "lux_channels": {
+      "channels_to_read": [0, 1, 2, 3, 4],
+      "channel_suffixes": {
+        "0": "Mod1_ai0",
+        "1": "Mod1_ai1",
+        "2": "Mod1_ai2",
+        "3": "Mod2_ai0",
+        "4": "Mod2_ai1"
+      },
+      "file_pattern": "(can be deleted if reading directly from lux channels){Lux_File_Name_Without_Ext}_{suffix}.csv" 
+    }
+  },
+  "scenario_configs": {
+    "1": {
+      "Scenario Number": 1,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 96.6, "max": 112.7 },
+        "Test Vehicle Speed (mph)": { "min": 60, "max": 70 },
+        "Orientation": "Opposite Direction",
+        "Radius of Curve (m.)": "Straight",
+        "Curve Direction": "N/A",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 220 }
+      },
+      "lux_requirements": {
+        "mode_name": "Opposite Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 0.6, "max_illuminance_lux_plus_20pct": 0.72 },
+          { "min_distance_m": 120, "max_distance_m": 220, "max_illuminance_lux": 0.3, "max_illuminance_lux_plus_20pct": 0.36 }
+        ]
+      }
+    },
+    "2": {
+      "Scenario Number": 2,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 40.2, "max": 48.3 },
+        "Test Vehicle Speed (mph)": { "min": 25, "max": 30 },
+        "Orientation": "Opposite Direction",
+        "Radius of Curve (m.)": { "min": 85, "max": 115 },
+        "Curve Direction": "Left",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 60 }
+      },
+      "lux_requirements": {
+        "mode_name": "Opposite Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 0.6, "max_illuminance_lux_plus_20pct": 0.72 },
+          { "min_distance_m": 120, "max_distance_m": 220, "max_illuminance_lux": 0.3, "max_illuminance_lux_plus_20pct": 0.36 }
+        ]
+      }
+    },
+    "3": {
+      "Scenario Number": 3,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 64.4, "max": 72.4 },
+        "Test Vehicle Speed (mph)": { "min": 40, "max": 45 },
+        "Orientation": "Opposite Direction",
+        "Radius of Curve (m.)": { "min": 210, "max": 250 },
+        "Curve Direction": "Left",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 150 }
+      },
+      "lux_requirements": {
+        "mode_name": "Opposite Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 0.6, "max_illuminance_lux_plus_20pct": 0.72 },
+          { "min_distance_m": 120, "max_distance_m": 220, "max_illuminance_lux": 0.3, "max_illuminance_lux_plus_20pct": 0.36 }
+        ]
+      }
+    },
+    "4": {
+      "Scenario Number": 4,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 80.5, "max": 88.5 },
+        "Test Vehicle Speed (mph)": { "min": 50, "max": 55 },
+        "Orientation": "Opposite Direction",
+        "Radius of Curve (m.)": { "min": 335, "max": 400 },
+        "Curve Direction": "Left",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 220 }
+      },
+      "lux_requirements": {
+        "mode_name": "Opposite Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 0.6, "max_illuminance_lux_plus_20pct": 0.72 },
+          { "min_distance_m": 120, "max_distance_m": 220, "max_illuminance_lux": 0.3, "max_illuminance_lux_plus_20pct": 0.36 }
+        ]
+      }
+    },
+    "5": {
+      "Scenario Number": 5,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 64.4, "max": 72.4 },
+        "Test Vehicle Speed (mph)": { "min": 40, "max": 45 },
+        "Orientation": "Opposite Direction",
+        "Radius of Curve (m.)": { "min": 210, "max": 250 },
+        "Curve Direction": "Right",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 50 }
+      },
+      "lux_requirements": {
+        "mode_name": "Opposite Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 0.6, "max_illuminance_lux_plus_20pct": 0.72 },
+          { "min_distance_m": 120, "max_distance_m": 220, "max_illuminance_lux": 0.3, "max_illuminance_lux_plus_20pct": 0.36 }
+        ]
+      }
+    },
+    "6": {
+      "Scenario Number": 6,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 80.5, "max": 88.5 },
+        "Test Vehicle Speed (mph)": { "min": 50, "max": 55 },
+        "Orientation": "Opposite Direction",
+        "Radius of Curve (m.)": { "min": 335, "max": 400 },
+        "Curve Direction": "Right",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 70 }
+      },
+      "lux_requirements": {
+        "mode_name": "Opposite Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 0.6, "max_illuminance_lux_plus_20pct": 0.72 },
+          { "min_distance_m": 120, "max_distance_m": 220, "max_illuminance_lux": 0.3, "max_illuminance_lux_plus_20pct": 0.36 }
+        ]
+      }
+    },
+    "7": {
+      "Scenario Number": 7,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 96.6, "max": 112.7 },
+        "Test Vehicle Speed (mph)": { "min": 60, "max": 70 },
+        "Orientation": "Same Direction",
+        "Radius of Curve (m.)": "Straight",
+        "Curve Direction": "N/A",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 100 }
+      },
+      "lux_requirements": {
+        "mode_name": "Same Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 18.9, "max_illuminance_lux_plus_20pct": 22.68 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 18.9, "max_illuminance_lux_plus_20pct": 22.68 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 4.0, "max_illuminance_lux_plus_20pct": 4.8 }
+        ]
+      }
+    },
+    "8": {
+      "Scenario Number": 8,
+      "scenario_info": {
+        "Test Vehicle Speed (kph)": { "min": 64.4, "max": 72.4 },
+        "Test Vehicle Speed (mph)": { "min": 40, "max": 45 },
+        "Orientation": "Same Direction",
+        "Radius of Curve (m.)": { "min": 210, "max": 250 },
+        "Curve Direction": "Left",
+        "Superelevation (%)": { "min": 0, "max": 2 },
+        "Measurement Distance Range (m)": { "min": 15, "max": 100 }
+      },
+      "lux_requirements": {
+        "mode_name": "Same Direction",
+        "illuminance_distance_intervals": [
+          { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 18.9, "max_illuminance_lux_plus_20pct": 22.68 },
+          { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 18.9, "max_illuminance_lux_plus_20pct": 22.68 },
+          { "min_distance_m": 60, "max_distance_m": 120, "max_illuminance_lux": 4.0, "max_illuminance_lux_plus_20pct": 4.8 }
+        ]
+      }
+    }
+  }
+}

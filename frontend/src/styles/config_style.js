@@ -65,6 +65,27 @@ export const configStyles = {
     fontWeight: "600",
   },
 
+  connectBtn: (active, baseColor) => ({
+    backgroundColor: active ? "#b22222" : baseColor,
+    color: "white",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "5px",
+    fontSize: "16px",
+    fontWeight: "700",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  }),
+
+  connectIndicator: (active, warn) => ({
+    fontSize: "10px",
+    fontWeight: "bold",
+    color: active ? (warn ? "#e6b959" : "#27ae60") : "#57606f",
+    padding: "2px 8px",
+    borderRadius: "10px",
+    border: `1px solid ${active ? (warn ? "#e6b959" : "#27ae60") : "#333"}`,
+  }),
+
   // Section/Card Styling
   section: {
     background: "#ffffff",

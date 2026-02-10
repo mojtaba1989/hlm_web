@@ -7,6 +7,7 @@ import struct
 import time
 import os
 from enum import IntEnum
+import subprocess
 
 class ErrorCodes(IntEnum):
     SUCCESS = 0
@@ -83,6 +84,40 @@ def get_size(file_name):
         s /= 1024
         ord += 1
     return f"{s:.2f} {['B', 'KB', 'MB', 'GB', 'TB'][ord]}"
+
+def connect_to_wifi(ssid, password):
+    try:
+        result = subprocess.run(
+            ["nmcli", "dev", "wifi", "connect", ssid, "password", password],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return {"status": "success", "message": result.stdout.strip()}
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "message": e.stderr.strip()}
+    
+def list_wifi_networks_nmcli():
+    """Lists available Wi-Fi networks using nmcli and returns their SSIDs."""
+    try:
+        # Run the nmcli command to list Wi-Fi devices and their SSIDs in a parsable format
+        command = ["nmcli", "-t", "-f", "ssid", "dev", "wifi", "list"]
+        output = subprocess.check_output(command, stderr=subprocess.STDOUT, text=True)
+        
+        # Split the output by lines and remove duplicates by converting to a set
+        ssids = set()
+        for line in output.strip().split('\n'):
+            # The -t flag gives a colon-separated list; we take the SSID
+            if line:
+                ssids.add(line.strip())
+        
+        return list(ssids)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error running nmcli: {e.output}")
+    except FileNotFoundError:
+        print("The 'nmcli' command was not found. Ensure NetworkManager is installed and running.")
+    return []
 
 class failed_loop_ctrl:
     def __init__(self, max_failed=-1):

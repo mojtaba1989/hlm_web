@@ -37,6 +37,11 @@ async function get_cameras() {
   .then((res) => res.json());
 }
 
+async function get_ssids() {
+  return fetch(`${backendUrl}/api/lights`)
+  .then((res) => res.json());
+}
+
 /* =========================
    Input renderers
 ========================= */
@@ -147,6 +152,10 @@ function ConfigField({
 ========================= */
 function ConfigSection({ name, data, onUpdate, cameras}) {
   const enabled = data.ENABLED?.[0] ?? true;
+  if (name === "Wifi") {
+    return (
+      WifiConfigSection({ name, data, onUpdate }));
+  }
 
   return (
     <div
@@ -205,6 +214,69 @@ function ConfigSection({ name, data, onUpdate, cameras}) {
     </div>
   );
 }
+
+function WifiConfigSection({ name, data, onUpdate }) {
+  const [connect, setConnect] = useState(false);
+  const [status, setStatus] = useState("○ OFFLINE");
+  const [warn, setWarn] = useState(true);
+  const enabled = data.ENABLED?.[0] ?? true;
+  if (name !== "Wifi") {
+      return (
+        <div> </div>);
+    }
+
+  const handleWifiConnect = async() => {
+    if (!connect) {
+      setConnect(true);
+      setStatus("● ONLINE");
+    } else {
+      setConnect(false);
+      setStatus("○ OFFLINE");
+    }
+  };
+
+  return (
+    <div
+      style={{
+        ...configStyles.section,
+        backgroundColor: enabled ? "white" :  "#f2f2f2",
+      }}>
+      
+      <header style={{...configStyles.sectionTitle, display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+        <div>
+          <h2 style={{...configStyles.sectionTitle, color: enabled ? "black" : "gray"}}>{name}</h2>
+        </div>
+        <div>
+          <span style={configStyles.connectIndicator(connect, warn)}>{status}</span>
+          <span> </span>
+          <button style={configStyles.connectBtn(connect, "#27ae60")}
+            onClick={handleWifiConnect}>
+            {connect ? "Disconnect" : "Connect"}
+          </button>
+        </div>
+      </header>
+      
+      {Object.entries(data).map(([key, val]) => {
+        const [value, editable] = val;
+        return (
+          <div key={key} style={configStyles.row}>
+            <label style={configStyles.label}>{key}</label>
+            <ConfigField
+              section={name}
+              field={key}
+              value={value}
+              editable={editable}
+              enabled={key === "ENABLED" ? true : enabled}
+              onUpdate={onUpdate}
+              cameras={[]}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+  
 
 /* =========================
    Main Page
@@ -295,6 +367,15 @@ export default function ConfigPage() {
             cameras={cameras}
           />
         ))}
+        {/* {Object.entries(config).map(([name, data]) => (
+          <WifiConfigSection
+            key={name}
+            name={name}
+            data={data}
+            onUpdate={updateValue}
+            cameras={cameras}
+          />
+        ))} */}
       </main>
 
       <footer style={configStyles.footer}>

@@ -23,3 +23,11 @@ def save_config(cfg: Dict):
 @router.post("/check_unsaved")
 def check_unsaved(cfg: Dict):
     return {"unsaved": cfg != core.config.configs}
+
+@router.get("/wifi_ssids")
+def get_wifi_ssids():
+    return core.config.get_wifi_ssids()
+
+@router.post("/connect_wifi")
+def connect_wifi(ssid: str, password: str):
+    return core.config.connect_wifi(ssid, password)
