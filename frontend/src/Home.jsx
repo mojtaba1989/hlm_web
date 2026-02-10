@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 import { homeStyles } from "./styles/home_style";
 
@@ -10,6 +10,7 @@ export default function HomePage() {
     const [streaming, setStreaming] = useState(false);
     const [recording, setRecording] = useState(false);
     const [disabled, setDisabled] = useState(false);
+    const [testCatalog, setTestCatalog] = useState([]);
     const navigate = useNavigate();
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -42,6 +43,14 @@ export default function HomePage() {
             console.error("Streaming toggle failed:", err);
         }
     };
+
+    useEffect(() => {
+        fetch(`${backendUrl}/api/test_catalog`, { method: "GET" }).
+        then(res => res.json()).
+        then(data => setTestCatalog(data.scenarios)).
+        catch(err => console.error("Failed to fetch test catalog:", err));
+    }, []);
+
     return(
         <div style={homeStyles.page}>
             {/* Header / Top Control Bar */}
@@ -84,12 +93,20 @@ export default function HomePage() {
               {/* TOP RIGHT: Test Config Placeholder */}
               <section style={{ ...homeStyles.panel, gridArea: "test" }}>
                 <div style={homeStyles.panelHeader}>Test Configuration</div>
-                <div style={homeStyles.placeholder}>
-                <p style={{ fontWeight: 'bold', color: '#888' }}>Diagnostic Overrides</p>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                    <button disabled style={{ opacity: 0.5 }}>LED Test</button>
-                    <button disabled style={{ opacity: 0.5 }}>Fan Pulse</button>
-                </div>
+                <p style={{ fontWeight: 'bold', color: '#888' }}>Test Catalog</p>
+                <select 
+                    onChange={(e) => console.log(e.target.value)} 
+                    style={{ padding: '8px', borderRadius: '4px' }}
+                    >
+                    <option value="">Select a test...</option>
+                    {Array.isArray(testCatalog) && testCatalog.map((desc, index) => (
+                        <option key={index} value={desc}>
+                        {desc}
+                        </option>
+                    ))}
+                </select>
+                <div style={{ ...homeStyles.placeholder, flex: 1, overflowY: 'auto' }}>
+                    
                 </div>
               </section>
 

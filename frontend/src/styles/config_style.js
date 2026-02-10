@@ -25,8 +25,11 @@ export const configStyles = {
   
   container: {
     maxWidth: "900px",
-    margin: "30px auto",
+    maxHeight: "85%",
+    margin: "10px auto",
     padding: "0 20px",
+    overflowY: "auto",
+    flex: 1,
   },
 
   // Button Improvements
@@ -65,15 +68,15 @@ export const configStyles = {
     fontWeight: "600",
   },
 
-  connectBtn: (active, baseColor) => ({
-    backgroundColor: active ? "#b22222" : baseColor,
+  connectBtn: (active, enabled) => ({
+    backgroundColor: enabled ?  (active ? "#b22222" : "#27ae60") : "#ccc",
     color: "white",
     border: "none",
     padding: "8px 14px",
     borderRadius: "5px",
     fontSize: "16px",
     fontWeight: "700",
-    cursor: "pointer",
+    cursor: enabled ? "pointer" : "not-allowed",
     transition: "all 0.2s ease",
   }),
 
@@ -85,7 +88,20 @@ export const configStyles = {
     borderRadius: "10px",
     border: `1px solid ${active ? (warn ? "#e6b959" : "#27ae60") : "#333"}`,
   }),
-
+  refreshBtn: (active, isRefreshing) => ({
+    marginLeft: "10px",
+    padding: "6px 10px",
+    fontSize: "20px",
+    fontWeight: "600", // Icons look better slightly larger
+    cursor: isRefreshing ? "not-allowed" : "pointer",
+    background: "transparent",
+    border: "1px solid #dfe6e9",
+    borderRadius: "4px",
+    alignItems: "center",
+    justifyContent: "center",
+    color: active ? (isRefreshing ? "#ccc" : "#0984e3") : "#ccc",
+    transition: "all 0.2s",
+  }),
   // Section/Card Styling
   section: {
     background: "#ffffff",
@@ -103,6 +119,14 @@ export const configStyles = {
     paddingVertical: "12px",
     borderBottom: "1px solid #f1f2f6",
     marginBottom: "12px",
+  },
+  select: {
+    padding: "10px 12px",
+    border: "1px solid #dfe6e9",
+    borderRadius: "6px",
+    fontSize: "14px",
+    outline: "none",
+    transition: "border-color 0.2s",
   },
   label: {
     flex: "0 0 240px",

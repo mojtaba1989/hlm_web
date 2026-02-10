@@ -52,7 +52,7 @@
   },
   "scenario_configs": {
     "1": {
-      "Scenario Number": 1,
+      "description": "Straight road, opposite direction, 60-70 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 96.6, "max": 112.7 },
         "Test Vehicle Speed (mph)": { "min": 60, "max": 70 },
@@ -73,7 +73,7 @@
       }
     },
     "2": {
-      "Scenario Number": 2,
+      "description": "Left curve, opposite direction, 25-30 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 40.2, "max": 48.3 },
         "Test Vehicle Speed (mph)": { "min": 25, "max": 30 },
@@ -94,7 +94,7 @@
       }
     },
     "3": {
-      "Scenario Number": 3,
+      "description": "Left curve, opposite direction, 40-45 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 64.4, "max": 72.4 },
         "Test Vehicle Speed (mph)": { "min": 40, "max": 45 },
@@ -115,7 +115,7 @@
       }
     },
     "4": {
-      "Scenario Number": 4,
+      "description": "Left curve, opposite direction, 50-55 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 80.5, "max": 88.5 },
         "Test Vehicle Speed (mph)": { "min": 50, "max": 55 },
@@ -136,7 +136,7 @@
       }
     },
     "5": {
-      "Scenario Number": 5,
+      "description": "Right curve, opposite direction, 40-45 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 64.4, "max": 72.4 },
         "Test Vehicle Speed (mph)": { "min": 40, "max": 45 },
@@ -157,7 +157,7 @@
       }
     },
     "6": {
-      "Scenario Number": 6,
+      "description": "Right curve, opposite direction, 50-55 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 80.5, "max": 88.5 },
         "Test Vehicle Speed (mph)": { "min": 50, "max": 55 },
@@ -178,7 +178,7 @@
       }
     },
     "7": {
-      "Scenario Number": 7,
+      "description": "Straight, same direction, 60-70 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 96.6, "max": 112.7 },
         "Test Vehicle Speed (mph)": { "min": 60, "max": 70 },
@@ -198,7 +198,7 @@
       }
     },
     "8": {
-      "Scenario Number": 8,
+      "description": "Left curve, same direction, 40-45 mph",
       "scenario_info": {
         "Test Vehicle Speed (kph)": { "min": 64.4, "max": 72.4 },
         "Test Vehicle Speed (mph)": { "min": 40, "max": 45 },

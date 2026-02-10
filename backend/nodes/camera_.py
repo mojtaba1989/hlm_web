@@ -162,7 +162,7 @@ class video_recorder:
 
 def list_real_cameras(max_devices=64):
     base = "/sys/class/video4linux"
-    real_cams = [{"id": 'No camera', "path": "", "name": 'No camera'}]
+    real_cams = []
 
     for dev in os.listdir(base):
         dev_path = f"/dev/{dev}"

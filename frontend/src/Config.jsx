@@ -38,8 +38,61 @@ async function get_cameras() {
 }
 
 async function get_ssids() {
-  return fetch(`${backendUrl}/api/lights`)
+  return fetch(`${backendUrl}/api/wifi_ssids`)
   .then((res) => res.json());
+}
+
+async function connect_wifi(ssid, password, dev) {
+  return fetch(`${backendUrl}/api/connect_wifi`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ssid, password, dev }),
+  }).then((res) => res.json());
+}
+
+async function disconnect_wifi(dev) {
+  return fetch(`${backendUrl}/api/disconnect_wifi`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dev }),
+  }).then((res) => res.json());
+}
+
+async function wifi_status(dev) {
+  return fetch(`${backendUrl}/api/wifi_status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dev }),
+  }).then((res) => res.json());
+}
+
+async function radio_on() {
+  return fetch(`${backendUrl}/api/wifi_on`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  }).then((res) => res.json());
+}
+
+async function radio_off() {
+  return fetch(`${backendUrl}/api/wifi_off`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  }).then((res) => res.json());
+}
+
+async function wifi_devices() {
+  return fetch(`${backendUrl}/api/wifi_devices`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }).then((res) => res.json());
+}
+
+async function get_wifi_ip(dev) {
+  return fetch(`${backendUrl}/api/wifi_ip`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dev }),
+  }).then((res) => res.json());
 }
 
 /* =========================
@@ -73,23 +126,166 @@ function TextInput({ value, disabled, onChange }) {
   );
 }
 
-function CameraInput({ value, disabled, onChange, cameras }) {
+function CameraInput({ value, disabled, onChange }) {
+  const [isScanning, setIsScanning] = useState(false);
+  const [cameras, setCameras] = useState([]);
+  const [initialized, setInitialized] = useState(false);
+  
+  useEffect(() => {
+    if (!initialized) {
+      get_cameras().then((data) => {
+        setCameras(data.cameras);
+        setInitialized(true);
+      });
+    }
+  }, [initialized]);
+
   return (
-    <select
-      value={value ?? ""}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-      style={configStyles.select}
-    >
-      {cameras.map((cam) => (
-        <option key={cam.id} value={cam.path}>
-          {cam.name}
-        </option>
-      ))}
-    </select>
+    <div>
+      <select
+        value={value ?? ""}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        style={configStyles.select}
+      >
+        <option value="" disabled>-- Select Camera --</option>
+        {Array.isArray(cameras) && cameras.length > 0 ? (
+          cameras.map((cam, index) => (
+            <option key={index} value={cam.path} style={{ color: "#000", background: "#fff" }}>
+              {cam.name}
+            </option>
+          ))
+        ) : (
+          <option value="" disabled>No Cameras Found</option>
+        )}
+      </select>
+      <button
+        disabled={disabled || isScanning}
+        onClick={() => {
+          setIsScanning(true);
+          get_cameras().then((data) => {
+            setCameras(data.cameras);
+            setIsScanning(false);
+          }).catch(() => setIsScanning(false));
+        }}
+        style={configStyles.refreshBtn(!disabled, isScanning)}
+        title="Scan for camera devices"
+      >
+        <span>↻</span>
+      </button>
+    </div>
   );
 }
 
+function SSIDInput({ value, disabled, onChange}) {
+  const [isScanning, setIsScanning] = useState(false);
+  const [ssids, setSsids] = useState([]);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!initialized) {
+      get_ssids().then((res) => {
+        if (res.status === "success") {
+          setSsids(res.ssids);
+        }
+        setInitialized(true);
+      });
+    }
+  }, [initialized]);
+
+  return (
+    <div>
+      <select
+        value={value ?? ""}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        style={configStyles.select}
+      >
+        <option value="" disabled>-- Select WiFi Network --</option>
+        {Array.isArray(ssids) && ssids.length > 0 ? (
+          ssids.map((ssid, index) => (
+            <option key={index} value={ssid} style={{ color: "#000", background: "#fff" }}>
+              {ssid}
+            </option>
+          ))
+        ) : (
+          <option value="" disabled>No SSIDs Found</option>
+        )}
+      </select>
+      <button
+        disabled={disabled}
+        onClick={() => {
+          setIsScanning(true);
+          get_ssids().then((res) => {
+            if (res.status === "success") {
+              setSsids(res.ssids);
+            }
+            setIsScanning(false);
+          }).catch(() => setIsScanning(false));
+        }}
+        style={configStyles.refreshBtn(!disabled, isScanning)}
+        title="Scan for WiFi networks"
+      >
+        <span>↻</span>
+      </button>
+    </div>
+  );
+}
+
+function WifiDeviceSelect({ value, disabled, onChange }) {
+  const [isScanning, setIsScanning] = useState(false);
+  const [wifiDevices, setWifiDevices] = useState([]);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!initialized) {
+      wifi_devices().then((res) => {
+        if (res.status === "success") {
+          setWifiDevices(res.devices);
+        }
+        setInitialized(true);
+      });
+    }
+  }, [initialized]);
+
+  return (
+    <div>
+      <select
+        value={value ?? ""}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        style={configStyles.select}
+      >
+        <option value="" disabled>-- Select WiFi Device --</option>
+        {Array.isArray(wifiDevices) && wifiDevices.length > 0 ? (
+          wifiDevices.map((dev, index) => (
+            <option key={index} value={dev} style={{ color: "#000", background: "#fff" }}>
+              {dev}
+            </option>
+          ))
+        ) : (
+          <option value="" disabled>No WiFi Devices Found</option>
+        )}
+      </select>
+      <button
+        disabled={disabled || isScanning}
+        onClick={() => {
+          setIsScanning(true);
+          wifi_devices().then((res) => {
+            if (res.status === "success") {
+              setWifiDevices(res.devices);
+            }
+            setIsScanning(false);
+          }).catch(() => setIsScanning(false));
+        }}
+        style={configStyles.refreshBtn(!disabled, isScanning)}
+        title="Scan for WiFi devices"
+      >
+        <span>↻</span>
+      </button>
+    </div>
+  );
+}
 
 /* =========================
    Field renderer
@@ -101,7 +297,6 @@ function ConfigField({
   editable,
   enabled,
   onUpdate,
-  cameras
 }) {
   if (!editable) {
     return <span style={configStyles.readonly}>{String(value)}</span>;
@@ -123,7 +318,26 @@ function ConfigField({
         value={value}
         disabled={!enabled}
         onChange={(v) => onUpdate(section, field, v)}
-        cameras={cameras}
+      />
+    );
+  }
+
+  if (field === "SSID") {
+    return (
+      <SSIDInput
+        value={value}
+        disabled={!enabled}
+        onChange={(v) => onUpdate(section, field, v)}
+      />
+    );
+  }
+
+  if (field === "INTERFACE") {
+    return (
+      <WifiDeviceSelect
+        value={value}
+        disabled={!enabled}
+        onChange={(v) => onUpdate(section, field, v)}
       />
     );
   }
@@ -150,7 +364,7 @@ function ConfigField({
 /* =========================
    Section renderer
 ========================= */
-function ConfigSection({ name, data, onUpdate, cameras}) {
+function ConfigSection({ name, data, onUpdate}) {
   const enabled = data.ENABLED?.[0] ?? true;
   if (name === "Wifi") {
     return (
@@ -179,7 +393,6 @@ function ConfigSection({ name, data, onUpdate, cameras}) {
                 editable={editable}
                 enabled={key === "ENABLED" ? true : enabled}
                 onUpdate={onUpdate}
-                cameras={cameras}
               />
             </div>
           );
@@ -220,18 +433,92 @@ function WifiConfigSection({ name, data, onUpdate }) {
   const [status, setStatus] = useState("○ OFFLINE");
   const [warn, setWarn] = useState(true);
   const enabled = data.ENABLED?.[0] ?? true;
-  if (name !== "Wifi") {
-      return (
-        <div> </div>);
+  const [statusChecked, setStatusChecked] = useState(false);
+
+  useEffect(() => {
+    console.log(data.DHCP?.[0], data.DHCP?.[1])
+    if (data.DHCP?.[0]){
+      get_wifi_ip(data.INTERFACE[0]).then((res) => {
+        console.log("IP fetch result:", res.ip_addresses);
+        if (res.status === "success") {
+          data.MANUAL_IP[0] = res.ip_addresses;
+          data.MANUAL_IP[1] = false;
+        } else {
+          data.MANUAL_IP[1] = true;
+        }
+      });
     }
+  }, [data.DHCP?.[0], data.INTERFACE, statusChecked]);
+  
+  useEffect(() => {
+    if (enabled && connect) {
+    } else if (enabled && !connect) {
+      radio_on();
+    } else {
+      radio_off();
+      setConnect(false);
+      setStatus("○ OFFLINE");
+    }
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!statusChecked) {
+      wifi_status(data.INTERFACE[0]).then((res) => {
+        if (res.status === "success") {
+          if (res.device_state === "connected") {
+            setStatus("● ONLINE");
+            setWarn(false);
+            setConnect(true);
+          } else {
+            setStatus("○ OFFLINE");
+            setWarn(true);
+            setConnect(false);
+          }
+        } else {
+          setStatus("○ OFFLINE");
+          setWarn(true);
+          setConnect(false);
+        }
+      }).catch(() => {
+        setStatus("○ OFFLINE");
+        setWarn(true);
+        setConnect(false);
+      });
+    }
+    setStatusChecked(true);
+  }, []);
 
   const handleWifiConnect = async() => {
     if (!connect) {
-      setConnect(true);
-      setStatus("● ONLINE");
+      connect_wifi(data.SSID[0], data.PASSWORD[0], data.INTERFACE[0])
+        .then((res) => {
+          if (res.status === "success") {
+            setConnect(true);
+            setStatus("● ONLINE");
+            setWarn(false);
+          } else {
+            setWarn(true);
+            alert("Failed to connect to WiFi: " + res.message);
+          }
+        })
+        .catch((err) => {
+          setWarn(true);
+          alert("Error connecting to WiFi: " + err.message);
+        });
     } else {
-      setConnect(false);
-      setStatus("○ OFFLINE");
+      disconnect_wifi(data.INTERFACE[0])
+        .then((res) => {
+          if (res.status === "success") {
+            setConnect(false);
+            setStatus("○ OFFLINE");
+            setWarn(false);  
+          } else {
+            alert("Failed to disconnect WiFi: " + res.message);
+          }
+        })
+        .catch((err) => {
+          alert("Error disconnecting WiFi: " + err.message);
+        });
     }
   };
 
@@ -249,8 +536,9 @@ function WifiConfigSection({ name, data, onUpdate }) {
         <div>
           <span style={configStyles.connectIndicator(connect, warn)}>{status}</span>
           <span> </span>
-          <button style={configStyles.connectBtn(connect, "#27ae60")}
-            onClick={handleWifiConnect}>
+          <button style={configStyles.connectBtn(connect, enabled)}
+            onClick={handleWifiConnect}
+            disabled={!enabled}>
             {connect ? "Disconnect" : "Connect"}
           </button>
         </div>
@@ -268,7 +556,6 @@ function WifiConfigSection({ name, data, onUpdate }) {
               editable={editable}
               enabled={key === "ENABLED" ? true : enabled}
               onUpdate={onUpdate}
-              cameras={[]}
             />
           </div>
         );
@@ -284,14 +571,7 @@ function WifiConfigSection({ name, data, onUpdate }) {
 export default function ConfigPage() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [status, setStatus] = useState(null);
-  const [cameras, setCameras] = useState([]);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    get_cameras()
-      .then((data) => setCameras(data.cameras))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     fetchConfig()
@@ -357,26 +637,16 @@ export default function ConfigPage() {
         </div>
       </header>
 
-      <main style={configStyles.container}>
-        {Object.entries(config).map(([name, data]) => (
-          <ConfigSection
-            key={name}
-            name={name}
-            data={data}
-            onUpdate={updateValue}
-            cameras={cameras}
-          />
-        ))}
-        {/* {Object.entries(config).map(([name, data]) => (
-          <WifiConfigSection
-            key={name}
-            name={name}
-            data={data}
-            onUpdate={updateValue}
-            cameras={cameras}
-          />
-        ))} */}
-      </main>
+      <div style={configStyles.container}>
+          {Object.entries(config).map(([name, data]) => (
+            <ConfigSection
+              key={name}
+              name={name}
+              data={data}
+              onUpdate={updateValue}
+            />
+          ))}
+      </div>
 
       <footer style={configStyles.footer}>
         <span style={{ color: "#2f80ed", fontWeight: "800" }}>ACM</span>
