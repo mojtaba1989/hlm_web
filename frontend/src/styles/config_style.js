@@ -1,17 +1,17 @@
 export const configStyles = {
   page: {
-    height: "100vh",      // Lock to exactly screen height
-    width: "100%",       // Lock to exactly screen width
+    height: "100vh",
+    width: "100%",
     // display: "flex",
     // flexDirection: "column",
-    overflow: "auto",   // Disables global scrollbars
-    background: "#0f0f0f", // Slightly darker for better contrast
+    overflow: "auto",
+    background: "#0f0f0f",
     color: "#e0e0e0",
     fontFamily: "'Inter', -apple-system, sans-serif",
   },
   header: {
-    height: "60px",       // Fixed height
-    flexShrink: 0,        // Prevents header from collapsing
+    height: "60px",
+    flexShrink: 0,
     background: "#1a1a1a",
     display: "flex",
     justifyContent: "space-between",
@@ -35,7 +35,7 @@ export const configStyles = {
   // Button Improvements
   saveBtn: {
     padding: "10px 20px",
-    backgroundColor: "#0984e3", // Vibrant Blue
+    backgroundColor: "#0984e3",
     color: "#fff",
     border: "none",
     borderRadius: "6px",
@@ -49,7 +49,7 @@ export const configStyles = {
   },
   resetBtn: {
     padding: "10px 20px",
-    backgroundColor: "#3acabe", // Vibrant Blue
+    backgroundColor: "#3acabe",
     color: "#fff",
     border: "none",
     borderRadius: "6px",
@@ -83,16 +83,16 @@ export const configStyles = {
   connectIndicator: (active, warn) => ({
     fontSize: "10px",
     fontWeight: "bold",
-    color: active ? (warn ? "#e6b959" : "#27ae60") : "#57606f",
+    color: warn ? "#f0a80d" : (active ? "#27ae60" : "#57606f"),
     padding: "2px 8px",
     borderRadius: "10px",
-    border: `1px solid ${active ? (warn ? "#e6b959" : "#27ae60") : "#333"}`,
+    border: `1px solid ${warn ? "#d19105" : (active ? "#27ae60" : "#333")}`,
   }),
   refreshBtn: (active, isRefreshing) => ({
     marginLeft: "10px",
-    padding: "6px 10px",
+    padding: "auto 7px",
     fontSize: "20px",
-    fontWeight: "600", // Icons look better slightly larger
+    fontWeight: "600",
     cursor: isRefreshing ? "not-allowed" : "pointer",
     background: "transparent",
     border: "1px solid #dfe6e9",
@@ -102,7 +102,6 @@ export const configStyles = {
     color: active ? (isRefreshing ? "#ccc" : "#0984e3") : "#ccc",
     transition: "all 0.2s",
   }),
-  // Section/Card Styling
   section: {
     background: "#ffffff",
     padding: "24px",
@@ -142,13 +141,20 @@ export const configStyles = {
     fontSize: "14px",
     outline: "none",
     transition: "border-color 0.2s",
-    "&:focus": { borderColor: "#0984e3" }
   },
   status: {
     marginRight: "15px",
     fontSize: "13px",
     color: "#00b894", // Success green
     fontWeight: "500"
+  },
+  info: {
+    display: "flex",          // Required for justifyContent to work
+    justifyContent: "flex-end", // "flex-end" is the standard value for right alignment
+    marginRight: "15px",
+    fontSize: "13px",
+    color: "#cccccc",
+    fontWeight: "500",
   },
   footer: {
     height: "30px",

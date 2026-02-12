@@ -4,7 +4,7 @@ import json
 import time
 
 from nodes.core import core_ as core
-from nodes.wifi_ import *
+from nodes.network_manager_ import *
 
 router = APIRouter()
 TEST_CATALOG_PATH = "/home/dev/hlm_web/backend/.configs/test_catalog.json"
@@ -32,40 +32,39 @@ def get_wifi_ssids():
     time.sleep(.1)
     return list_wifi_networks_nmcli()
 
-@router.get("/wifi_devices")
+@router.get("/network_devices")
 def get_wifi_devices():
     time.sleep(.1)
-    return list_wifi_devices_nmcli()
+    return list_devices_nmcli()
 
-@router.post("/connect_wifi")
-def wifi_connect_(request: Dict):
+@router.post("/connect")
+def connect_(request: Dict):
     ssid = request.get("ssid")
     password = request.get("password")
     dev = request.get("dev")
-    return wifi_connect(ssid, password, dev)
+    ip = request.get("ip")
+    return connect(dev, ssid, password, ip)
 
-@router.post("/disconnect_wifi")
-def wifi_disconnect_(request: Dict):
+@router.post("/disconnect")
+def disconnect_(request: Dict):
     dev = request.get("dev")
-    return wifi_disconnect(dev)
+    return disconnect(dev)
 
-@router.post("/wifi_status")
-def wifi_status_(request: Dict):
+@router.post("/change_ip")
+def change_ip_(request: Dict):
     dev = request.get("dev")
-    return wifi_status(dev)
+    ip = request.get("ip")
+    dhcp = request.get("dhcp")
+    return change_ip(dev, ip, dhcp)
 
-@router.post("/wifi_on")
-def wifi_on():
-    return radio_on()
-
-@router.post("/wifi_off")
-def wifi_off():
-    return radio_off()
-
-@router.post("/wifi_ip")
-def get_wifi_ip(request: Dict):
+@router.post("/device_status")
+def device_status_(request: Dict):
     dev = request.get("dev")
-    return get_ip_address(dev)
+    return device_status(dev)
+
+@router.get("/route")
+def get_route_():
+    return get_route()
 
 @router.get("/test_catalog")
 def get_test_catalog():

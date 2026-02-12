@@ -1,7 +1,7 @@
 import { use, useEffect, useState } from "react";
 // import { CONFIG as DEFAULT_CONFIG } from "./config_files/config";
 import { configStyles } from "./styles/config_style";
-import { useNavigate } from "react-router-dom";
+import { Routes, useNavigate } from "react-router-dom";
 
 const DEFAULT_CONFIG = {};
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -32,6 +32,11 @@ async function check_unsaved(cfg) {
   });
 }
 
+async function get_route() {
+  return fetch(`${backendUrl}/api/route`)
+  .then((res) => res.json());
+}
+
 async function get_cameras() {
   return fetch(`${backendUrl}/api/camera_feed/cameras`)
   .then((res) => res.json());
@@ -42,56 +47,43 @@ async function get_ssids() {
   .then((res) => res.json());
 }
 
-async function connect_wifi(ssid, password, dev) {
-  return fetch(`${backendUrl}/api/connect_wifi`, {
+async function connect(dev, ssid="", password="", ip="") {
+  return fetch(`${backendUrl}/api/connect`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ssid, password, dev }),
+    body: JSON.stringify({ ssid, password, dev, ip }),
   }).then((res) => res.json());
 }
 
-async function disconnect_wifi(dev) {
-  return fetch(`${backendUrl}/api/disconnect_wifi`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dev }),
-  }).then((res) => res.json());
-}
-
-async function wifi_status(dev) {
-  return fetch(`${backendUrl}/api/wifi_status`, {
+async function disconnect(dev) {
+  return fetch(`${backendUrl}/api/disconnect`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ dev }),
   }).then((res) => res.json());
 }
 
-async function radio_on() {
-  return fetch(`${backendUrl}/api/wifi_on`, {
+async function change_ip(dev, ip, dhcp) {
+  console.log(dev, ip, dhcp);
+  return fetch(`${backendUrl}/api/change_ip`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dev, ip, dhcp }),
   }).then((res) => res.json());
 }
 
-async function radio_off() {
-  return fetch(`${backendUrl}/api/wifi_off`, {
+async function device_status(dev) {
+  return fetch(`${backendUrl}/api/device_status`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dev }),
   }).then((res) => res.json());
 }
 
-async function wifi_devices() {
-  return fetch(`${backendUrl}/api/wifi_devices`, {
+async function network_devices() {
+  return fetch(`${backendUrl}/api/network_devices`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
-  }).then((res) => res.json());
-}
-
-async function get_wifi_ip(dev) {
-  return fetch(`${backendUrl}/api/wifi_ip`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dev }),
   }).then((res) => res.json());
 }
 
@@ -232,16 +224,16 @@ function SSIDInput({ value, disabled, onChange}) {
   );
 }
 
-function WifiDeviceSelect({ value, disabled, onChange }) {
+function NetworkDeviceSelect({ value, disabled, onChange }) {
   const [isScanning, setIsScanning] = useState(false);
-  const [wifiDevices, setWifiDevices] = useState([]);
+  const [netDevices, setNetDevices] = useState([]);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     if (!initialized) {
-      wifi_devices().then((res) => {
+      network_devices().then((res) => {
         if (res.status === "success") {
-          setWifiDevices(res.devices);
+          setNetDevices(res.devices);
         }
         setInitialized(true);
       });
@@ -256,30 +248,30 @@ function WifiDeviceSelect({ value, disabled, onChange }) {
         onChange={(e) => onChange(e.target.value)}
         style={configStyles.select}
       >
-        <option value="" disabled>-- Select WiFi Device --</option>
-        {Array.isArray(wifiDevices) && wifiDevices.length > 0 ? (
-          wifiDevices.map((dev, index) => (
+        <option value="" disabled>-- Select Interface --</option>
+        {Array.isArray(netDevices) && netDevices.length > 0 ? (
+          netDevices.map((dev, index) => (
             <option key={index} value={dev} style={{ color: "#000", background: "#fff" }}>
               {dev}
             </option>
           ))
         ) : (
-          <option value="" disabled>No WiFi Devices Found</option>
+          <option value="" disabled>No Interface Found</option>
         )}
       </select>
       <button
         disabled={disabled || isScanning}
         onClick={() => {
           setIsScanning(true);
-          wifi_devices().then((res) => {
+          network_devices().then((res) => {
             if (res.status === "success") {
-              setWifiDevices(res.devices);
+              setNetDevices(res.devices);
             }
             setIsScanning(false);
           }).catch(() => setIsScanning(false));
         }}
         style={configStyles.refreshBtn(!disabled, isScanning)}
-        title="Scan for WiFi devices"
+        title="Scan for Network devices"
       >
         <span>↻</span>
       </button>
@@ -334,7 +326,7 @@ function ConfigField({
 
   if (field === "INTERFACE") {
     return (
-      <WifiDeviceSelect
+      <NetworkDeviceSelect
         value={value}
         disabled={!enabled}
         onChange={(v) => onUpdate(section, field, v)}
@@ -366,10 +358,19 @@ function ConfigField({
 ========================= */
 function ConfigSection({ name, data, onUpdate}) {
   const enabled = data.ENABLED?.[0] ?? true;
-  if (name === "Wifi") {
+  const [ip, setIP] = useState(data['IP/NETMASK'][0]);
+  if (name === "NETWORK") {
     return (
-      WifiConfigSection({ name, data, onUpdate }));
+      NetConfigSection({ name, data, onUpdate}));
   }
+
+  useEffect(() => {
+    device_status(data['INTERFACE'][0]).then((res) => {
+      if (res.status === "success") {
+        onUpdate(name, "IP/NETMASK", res.ip_address);
+      }
+    });
+  }, [data['INTERFACE'][0]]);
 
   return (
     <div
@@ -428,77 +429,83 @@ function ConfigSection({ name, data, onUpdate}) {
   );
 }
 
-function WifiConfigSection({ name, data, onUpdate }) {
-  const [connect, setConnect] = useState(false);
+function NetConfigSection({ name, data, onUpdate}) {
+  const [isConnected, setIsConnected] = useState(false);
   const [status, setStatus] = useState("○ OFFLINE");
   const [warn, setWarn] = useState(true);
-  const enabled = data.ENABLED?.[0] ?? true;
-  const [statusChecked, setStatusChecked] = useState(false);
+  const [isOn, setIsOn] = useState(false);
+  const [route, setRoute] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const enabled = true;
 
   useEffect(() => {
-    console.log(data.DHCP?.[0], data.DHCP?.[1])
-    if (data.DHCP?.[0]){
-      get_wifi_ip(data.INTERFACE[0]).then((res) => {
-        console.log("IP fetch result:", res.ip_addresses);
-        if (res.status === "success") {
-          data.MANUAL_IP[0] = res.ip_addresses;
-          data.MANUAL_IP[1] = false;
-        } else {
-          data.MANUAL_IP[1] = true;
-        }
-      });
+    if (route === null) {
+      get_route().then((res) => {
+        setRoute(res);
+        onUpdate("NETWORK", "INTERFACE", res.dev);
+      })
     }
-  }, [data.DHCP?.[0], data.INTERFACE, statusChecked]);
-  
-  useEffect(() => {
-    if (enabled && connect) {
-    } else if (enabled && !connect) {
-      radio_on();
-    } else {
-      radio_off();
-      setConnect(false);
-      setStatus("○ OFFLINE");
-    }
-  }, [enabled]);
-
-  useEffect(() => {
-    if (!statusChecked) {
-      wifi_status(data.INTERFACE[0]).then((res) => {
-        if (res.status === "success") {
-          if (res.device_state === "connected") {
-            setStatus("● ONLINE");
-            setWarn(false);
-            setConnect(true);
-          } else {
-            setStatus("○ OFFLINE");
-            setWarn(true);
-            setConnect(false);
-          }
-        } else {
-          setStatus("○ OFFLINE");
-          setWarn(true);
-          setConnect(false);
-        }
-      }).catch(() => {
-        setStatus("○ OFFLINE");
-        setWarn(true);
-        setConnect(false);
-      });
-    }
-    setStatusChecked(true);
   }, []);
 
-  const handleWifiConnect = async() => {
-    if (!connect) {
-      connect_wifi(data.SSID[0], data.PASSWORD[0], data.INTERFACE[0])
+  useEffect(() => {
+    if (route !== null && route.dev === data.INTERFACE[0]) {
+      setIsLocked(true);
+      onUpdate("NETWORK", "SSID", false, null, 1);
+      onUpdate("NETWORK", "PASSWORD", false, null, 1);
+      onUpdate("NETWORK", "DHCP", false, null, 1);
+      onUpdate("NETWORK", "IP/NETMASK", false, null, 1);
+    } else {
+      setIsLocked(false);
+      const ifaceName = data.INTERFACE[0];
+      const isEthernet = ifaceName.includes("eth");
+      onUpdate("NETWORK", "SSID", !isEthernet, null, 1);
+      onUpdate("NETWORK", "PASSWORD", !isEthernet, null, 1);
+      onUpdate("NETWORK", "DHCP", true, null, 1);
+      onUpdate("NETWORK", "IP/NETMASK", !data.DHCP[0], null, 1);
+    }
+  }, [data.INTERFACE, data.DHCP?.[0]]);
+
+  useEffect(() => {
+    device_status(data.INTERFACE[0]).then((res) => {
+      onUpdate("NETWORK", "IP/NETMASK", res.ip_address);
+      onUpdate("NETWORK", "SSID", res.connection);
+      if (res.status === "success") {
+        if (res.device_state === "connected") {
+          setIsOn(true);
+          setIsConnected(true);
+          setStatus("● ONLINE");
+          setWarn(false);
+        } else if (res.device_state === "disconnected") {
+          setIsOn(true)
+          setIsConnected(false);
+          setStatus("○ OFFLINE");
+          setWarn(false);
+        } else if (res.device_state === "unavailable" || res.device_state === "unmanaged") {
+          setIsOn(false);
+          setIsConnected(false);
+          setStatus("○ UNAVAILABLE");
+          setWarn(true);
+        } else {
+          setIsOn(true);
+          setIsConnected(false);
+          setStatus("○ OFFLINE");
+          setWarn(true);
+        }
+      }
+    })
+  }, [data.INTERFACE, isOn, isConnected]);
+
+  const handleConnect = async() => {
+    if (!isConnected) {
+      connect(data.INTERFACE[0], data.SSID[0], data.PASSWORD[0])
         .then((res) => {
           if (res.status === "success") {
-            setConnect(true);
+            setIsConnected(true);
             setStatus("● ONLINE");
             setWarn(false);
           } else {
             setWarn(true);
-            alert("Failed to connect to WiFi: " + res.message);
+            alert("Failed" + res.message);
           }
         })
         .catch((err) => {
@@ -506,10 +513,10 @@ function WifiConfigSection({ name, data, onUpdate }) {
           alert("Error connecting to WiFi: " + err.message);
         });
     } else {
-      disconnect_wifi(data.INTERFACE[0])
+      disconnect(data.INTERFACE[0])
         .then((res) => {
           if (res.status === "success") {
-            setConnect(false);
+            setIsConnected(false);
             setStatus("○ OFFLINE");
             setWarn(false);  
           } else {
@@ -521,6 +528,12 @@ function WifiConfigSection({ name, data, onUpdate }) {
         });
     }
   };
+
+  const updateIP = async() => {
+    change_ip(data.SSID[0], data['IP/NETMASK'][0], data.DHCP[0]).catch((err) => {
+      alert("Error changing IP: " + err.message);
+    });
+  }
 
   return (
     <div
@@ -534,12 +547,27 @@ function WifiConfigSection({ name, data, onUpdate }) {
           <h2 style={{...configStyles.sectionTitle, color: enabled ? "black" : "gray"}}>{name}</h2>
         </div>
         <div>
-          <span style={configStyles.connectIndicator(connect, warn)}>{status}</span>
+          <span style={configStyles.connectIndicator(isConnected, warn)}>{status}</span>
           <span> </span>
-          <button style={configStyles.connectBtn(connect, enabled)}
-            onClick={handleWifiConnect}
-            disabled={!enabled}>
-            {connect ? "Disconnect" : "Connect"}
+          <button style={configStyles.connectBtn(isConnected, isOn&&!isLocked)}
+            onClick={handleConnect}
+            disabled={!isOn}>
+            {isConnected ? "Disconnect" : "Connect"}
+          </button>
+          <span> </span>
+          <button style={configStyles.connectBtn(false, isOn&&!isLocked)}
+            onClick={updateIP}
+            disabled={!isOn}>
+            {"Change IP"}
+          </button>
+          <button
+            onClick={() => {
+              setIsConnected(!isConnected);
+            }}
+            style={configStyles.refreshBtn(true, false)}
+            title="Refresh Network Status"
+          >
+            <span>↻</span>
           </button>
         </div>
       </header>
@@ -560,6 +588,11 @@ function WifiConfigSection({ name, data, onUpdate }) {
           </div>
         );
       })}
+      <footer style={configStyles.info}>
+        <span>Host: {route !== null ? route.host_ip : "Unknown"}&lt;--&gt;</span>
+        <span style={{fontWeight:700}}>{route !== null ? route.dev : "Unknown"}</span>
+        <span>&lt;--&gt;Client IP: {route !== null ? route.client_ip : "Unknown"}</span>
+      </footer>
     </div>
   );
 };
@@ -579,15 +612,33 @@ export default function ConfigPage() {
       .catch(() => {});
   }, []);
 
-  const updateValue = (section, key, value, subKey = null) => {
+  const updateValue = (section, key, value, subKey = null, index = 0) => {
     setConfig((prev) => {
-      const updated = structuredClone(prev);
+      if (!prev[section] || !prev[section][key]) return prev;
       if (subKey) {
-        updated[section][key][subKey][0] = value;
-      } else {
-        updated[section][key][0] = value;
+        const current = [...prev[section][key][subKey]];
+        current[index] = value;
+        return {
+          ...prev,
+          [section]: {
+            ...prev[section],
+            [key]: {
+              ...prev[section][key],
+              [subKey]: current
+            }
+          }
+        };
       }
-      return updated;
+
+      const current = [...prev[section][key]];
+      current[index] = value;
+      return {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [key]: current
+        }
+      };
     });
   };
 
