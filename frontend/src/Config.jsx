@@ -358,19 +358,19 @@ function ConfigField({
 ========================= */
 function ConfigSection({ name, data, onUpdate}) {
   const enabled = data.ENABLED?.[0] ?? true;
-  const [ip, setIP] = useState(data['IP/NETMASK'][0]);
+  const [ip, setIP] = useState(data?.['IP/NETMASK']?.[0] ?? "");
   if (name === "NETWORK") {
     return (
       NetConfigSection({ name, data, onUpdate}));
   }
 
   useEffect(() => {
-    device_status(data['INTERFACE'][0]).then((res) => {
+    device_status(data['INTERFACE']?.[0]).then((res) => {
       if (res.status === "success") {
         onUpdate(name, "IP/NETMASK", res.ip_address);
       }
     });
-  }, [data['INTERFACE'][0]]);
+  }, [data['INTERFACE']?.[0]]);
 
   return (
     <div
@@ -448,7 +448,7 @@ function NetConfigSection({ name, data, onUpdate}) {
   }, []);
 
   useEffect(() => {
-    if (route !== null && route.dev === data.INTERFACE[0]) {
+    if (route !== null && route.dev === data.INTERFACE[0] || data.INTERFACE[0] === "lo" || data.INTERFACE[0] === "all") {
       setIsLocked(true);
       onUpdate("NETWORK", "SSID", false, null, 1);
       onUpdate("NETWORK", "PASSWORD", false, null, 1);
@@ -470,25 +470,20 @@ function NetConfigSection({ name, data, onUpdate}) {
       onUpdate("NETWORK", "IP/NETMASK", res.ip_address);
       onUpdate("NETWORK", "SSID", res.connection);
       if (res.status === "success") {
-        if (res.device_state === "connected") {
-          setIsOn(true);
-          setIsConnected(true);
-          setStatus("● ONLINE");
-          setWarn(false);
-        } else if (res.device_state === "disconnected") {
+        if (res.device_state === "disconnected") {
           setIsOn(true)
           setIsConnected(false);
-          setStatus("○ OFFLINE");
+          setStatus(`○ ${res.device_state.toUpperCase()}`);
           setWarn(false);
-        } else if (res.device_state === "unavailable" || res.device_state === "unmanaged") {
+        } else if (res.device_state.includes("connected")) {
+          setIsOn(true);
+          setIsConnected(true);
+          setStatus(`● ${res.device_state.toUpperCase()}`);
+          setWarn(false);
+        } else {
           setIsOn(false);
           setIsConnected(false);
-          setStatus("○ UNAVAILABLE");
-          setWarn(true);
-        } else {
-          setIsOn(true);
-          setIsConnected(false);
-          setStatus("○ OFFLINE");
+          setStatus(`○ ${res.device_state.toUpperCase()}`);
           setWarn(true);
         }
       }
@@ -555,7 +550,7 @@ function NetConfigSection({ name, data, onUpdate}) {
             {isConnected ? "Disconnect" : "Connect"}
           </button>
           <span> </span>
-          <button style={configStyles.connectBtn(false, isOn&&!isLocked)}
+          <button style={configStyles.changeIpBtn(isOn&&isConnected&&!isLocked)}
             onClick={updateIP}
             disabled={!isOn}>
             {"Change IP"}

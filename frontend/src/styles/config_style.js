@@ -79,6 +79,17 @@ export const configStyles = {
     cursor: enabled ? "pointer" : "not-allowed",
     transition: "all 0.2s ease",
   }),
+  changeIpBtn: (enabled) => ({
+    backgroundColor: enabled ? "#0984e3": "#ccc",
+    color: "white",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "5px",
+    fontSize: "16px",
+    fontWeight: "700",
+    cursor: enabled ? "pointer" : "not-allowed",
+    transition: "all 0.2s ease",
+  }),
 
   connectIndicator: (active, warn) => ({
     fontSize: "10px",

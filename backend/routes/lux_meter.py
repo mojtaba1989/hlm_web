@@ -40,13 +40,3 @@ def stop():
     sensor_running = False
     lux_streamer.stop()
     return {"message": "Sensor stopped!"}
-
-@router.get("/is_healthy")
-async def is_healthy():
-    report = {}
-    if 'lux' in core.socket_recorders.keys():
-        ret = core.socket_recorders['lux']['recorder'].is_healthy()
-        report['lux']  = ErrorCodes.desc(ret)
-    else:
-        report['lux'] = ErrorCodes.NOT_FOUND._name_
-    return {"message": report}

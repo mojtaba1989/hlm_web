@@ -96,6 +96,8 @@ def change_ip(connection_name, ip, dhcp):
         return {"status": "error", "message": e.stderr.strip()}
 
 def device_status(dev):
+    if dev == "all":
+        return {"status": "success", "device_state": "connected", "connection": "", "ip_address": ""}
     try:
         result = subprocess.run(
             ["nmcli", "-t", "-f", "DEVICE,STATE,CONNECTION", "dev"],
@@ -132,9 +134,9 @@ def list_devices_nmcli():
     try:
         command = ["nmcli", "-t", "-f", "DEVICE", "dev"]
         output = subprocess.check_output(command, stderr=subprocess.STDOUT, text=True)
-        devices = []
+        devices = ["all"]
         for line in output.strip().split('\n'):
-            if line and any([line.startswith(type) for type in ["eth", "wlan"]]):
+            if line and any([line.startswith(type) for type in ["eth", "wlan", "lo"]]):
                 devices.append(line.strip())
         
         return {"status": "success", "devices": devices}
@@ -142,6 +144,8 @@ def list_devices_nmcli():
         return {"status": "error", "message": e.output.strip()}
     
 def get_ip_address(dev):
+    if dev == "all":
+        return {"status": "success", "ip_address": ""}
     try:
         command = ["nmcli", "-g", "ip4.address", "device", "show", dev]
         output = subprocess.check_output(command, stderr=subprocess.STDOUT, text=True)

@@ -86,12 +86,12 @@ def get_size(file_name):
     return f"{s:.2f} {['B', 'KB', 'MB', 'GB', 'TB'][ord]}"
 
 class failed_loop_ctrl:
-    def __init__(self, max_failed=-1):
-        self.failed_to_get = 0
-        if max_failed is None or int(max_failed) <= 0:
-            self.max_failed = -1 
+    def __init__(self, max_failed=None):
+        if isinstance(max_failed, int) and max_failed > 0:
+            self.max_failed = max_failed 
         else:
-            self.max_failed = max_failed
+            self.max_failed = -1
+        self.reset()
 
     def is_failed(self):
         return self.max_failed != -1 and self.failed_to_get >= self.max_failed
@@ -110,11 +110,11 @@ class socket_recorder:
             name,
             logger=None,
             max_failed=-1,
-            packet_size=-1
+            packet_size=-1,
         ):
         self.set_logger(logger)
         self.name = name
-        self.host = host
+        self.host = host.split("/")[0]
         self.port = port
         self.socket = None
         self.file_name = None
@@ -128,19 +128,10 @@ class socket_recorder:
             obj = obj_dict[key]['recorder']
             if obj.host == self.host and obj.port == self.port:
                 return True
-            if obj.name == self.name:
-                return True
-            if obj.file_name == self.file_name:
-                return True
         return False
     
     def set_file_name(self, file_name):
         self.file_name = file_name.replace(file_name.split(".")[-1], "bin")
-
-    def set_address(self, host, port, obj_dict):
-        self.host = host
-        self.port = port
-        is_duplicate = self.is_duplicate(obj_dict)
 
     def is_healthy(self):
         if self.socket:
@@ -191,7 +182,7 @@ class socket_recorder:
                         self.error(f"{self.name}: Maximum attempts reached - Closing socket")
                         return
                     self.flc.increment()
-                    self.warning(f"{self.name}: Attempt {self.flc.failed_to_get}/{self.flc.max_failed} - Failed to get data")
+                    self.warning(f"{self.name}: Attempt - Failed to get data")
                     continue
                 if self.packet_size !=-1 and len(msg) != self.size:
                     continue

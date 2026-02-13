@@ -43,20 +43,18 @@ class LoggerManager:
         self.logger.addHandler(console_handler)
         self.logger.info("LogManager: Console logger set up")
 
-    def setup_file_logger(self, config : dict, file_name : str):
+    def setup_file_logger(self, file_name : str, level="INFO"):
         for handler in self.logger.handlers[:]:
             if isinstance(handler, logging.FileHandler):
                 self.logger.info("LogManager: old file logger removed")
                 self.logger.removeHandler(handler)
                 handler.close()
 
-        if config.get("LOG", {}).get("ENABLED", True):
-            level = config.get("LOG", {}).get("LEVEL", "INFO")
-            self.file_handler = logging.FileHandler(file_name)
-            self.file_handler.setLevel(LOG_LEVELS.get(level, logging.INFO))
-            self.file_handler.setFormatter(self.formatter)
-            self.logger.addHandler(self.file_handler)
-            self.logger.info("LogManager: File logger set up")
+        self.file_handler = logging.FileHandler(file_name)
+        self.file_handler.setLevel(LOG_LEVELS.get(level, logging.INFO))
+        self.file_handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.file_handler)
+        self.logger.info("LogManager: File logger set up")
 
     def setup_weblog_logger(self):
         for handler in self.logger.handlers[:]:

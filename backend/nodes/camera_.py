@@ -10,7 +10,7 @@ import os
 from nodes.utils import CameraErrorCodes
 
 class video_recorder:
-    def __init__(self, logger=None, config=None):
+    def __init__(self, logger=None, config=None,):
         self.set_logger(logger)
         self.config = config
         self.proc = None
@@ -37,7 +37,7 @@ class video_recorder:
         self.error = getattr(base, "error", _noop)
 
     def set_file_name(self, file_name):
-        self.file_name = file_name
+        self.file_name = file_name.replace(file_name.split(".")[-1], "avi")
 
     def get_status(self):
         if not self.config.get('CAMERA.ENABLED'):
@@ -61,6 +61,8 @@ class video_recorder:
         return check
 
     def init_socket(self):
+        # TODO: socket recoreder is permanently disabled
+        return
         if not self.config.get('camera.tcp_stream'):
             self.warning("TCP-Camera socket not enabled")
             return
@@ -86,32 +88,27 @@ class video_recorder:
             self.error(f"Video recorder failed to start: {self.status.name}")
             return
         
-        # Check if video recorder is already running
         self.info("Initializing video recorder")
         if self.recording:
             self.warning("Video recorder already started")
             return
         
-        # Check if file name is set
         if not self.file_name:
             self.error("Video recorder file name not set")
             return
         
-        avi_file = self.file_name.replace(".mp4", ".avi")
         self.recording = True
-        # Check if TCP-Camera socket is enabled
         if self.config.get('camera.tcp_stream'):
             self.init_socket()
             self.rec_thread.start()
 
-        self.proc = subprocess.Popen([self.node, avi_file, self.camera_device])
+        self.proc = subprocess.Popen([self.node, self.file_name, self.camera_device])
         time.sleep(.5)
-
-        # Check if video recorder started successfully
         if self.proc.poll() is not None:
             self.error("Video recorder failed to start")
             self.recording = False
             return
+        
         self.info("Video recorder started")
     
     def stop(self):
@@ -140,26 +137,6 @@ class video_recorder:
         with self.lock:
             return self.frame_id, self.frame_unix_time
 
-    def convert_to_mp4(self):
-        self.info("AVI -> MP4: Converting to MP4...")
-        if not self.file_name:
-            self.error("AVI -> MP4: Video recorder file name not set")
-            return
-        avi_file = self.file_name.replace(".mp4", ".avi")
-        if not os.path.exists(avi_file):
-            self.error("AVI -> MP4: Video recorder file not found")
-            return
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", avi_file,
-            "-c:v", "libx264",
-            "-preset", "veryfast",
-            "-pix_fmt", "yuv420p",
-            self.file_name
-        ]
-        subprocess.run(cmd, check=True)
-        self.info("AVI -> MP4: Conversion complete")
-
 def list_real_cameras(max_devices=64):
     base = "/sys/class/video4linux"
     real_cams = []
@@ -173,14 +150,33 @@ def list_real_cameras(max_devices=64):
         with open(name_file) as f:
             name = f.read().strip().lower()
 
-        # Skip virtual / encoder devices
         if "pispbe" in name or "rpi" in name:
             continue
 
-        # Optional: check if OpenCV can open it
         cap = cv2.VideoCapture(dev_path, cv2.CAP_V4L2)
         if cap.isOpened():
             real_cams.append({"id": f"usb_{name}", "path": dev_path, "name": name})
         cap.release()
 
     return real_cams
+
+def convert_to_mp4(file_name=None, config=None, replace=True):
+    # COonfig is not used -> just for compatibility
+    avi_file = file_name.replace(".mp4", ".avi")
+    if not os.path.exists(avi_file):
+        return {"status": "success", "message": "AVI file not found"}
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", avi_file,
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-pix_fmt", "yuv420p",
+        file_name
+    ]
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        if replace and os.path.getsize(file_name) >= 0:
+            os.remove(avi_file)
+        return {"status": "success", "message": result.stdout.strip()}
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "message": e.stderr.strip()}
