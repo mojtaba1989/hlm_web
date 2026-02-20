@@ -164,6 +164,7 @@ class socket_recorder:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
         self.socket.settimeout(timeout)
+        self.info(f"{self.name} socket initialized at {self.host}:{self.port}")
         return True
 
     def loop(self):
@@ -176,7 +177,7 @@ class socket_recorder:
         with open(self.file_name, "wb") as f:
             while self.running:
                 try:
-                    msg, addr = self.socket.recvfrom(2048)
+                    msg, addr = self.socket.recvfrom(65535)
                 except socket.timeout:
                     if self.flc.is_failed():
                         self.error(f"{self.name}: Maximum attempts reached - Closing socket")

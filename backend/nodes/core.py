@@ -6,7 +6,7 @@ import csv
 from nodes.utils import try_except, safe_call, socket_recorder
 from nodes.camera_ import video_recorder, convert_to_mp4
 from nodes.lux_ import DAQ_bin_to_csv
-from nodes.rt_ import NCOM_converter, RCOM_converter 
+from nodes.rt_ import XCOM_converter
 from nodes.file_manager_ import FileManager
 from nodes.logger_ import LoggerManager
 from nodes.config_manager_ import ConfigManager
@@ -48,7 +48,7 @@ class Core:
             if not tmp.is_duplicate(self.recorders):
                 self.recorders['NCOM'] = {
                     'recorder': tmp,
-                    'converter': RCOM_converter
+                    'converter': XCOM_converter
                 }
             else:
                 self.logger.logger.error("Core: IP AND PORT ALREADY IN USE")
@@ -63,7 +63,7 @@ class Core:
             if not tmp.is_duplicate(self.recorders):
                 self.recorders['RCOM'] = {
                     'recorder': tmp,
-                    'converter': NCOM_converter
+                    'converter': XCOM_converter
                 }
             else:
                 self.logger.logger.error("Core: IP AND PORT ALREADY IN USE")
@@ -97,10 +97,10 @@ class Core:
             "recording": current,
             "result": "unknown",
             "log": os.path.join(path, 'log'),
-            "DAQ": os.path.join(path, 'daq.csv'),
-            "CAMERA": os.path.join(path, 'camera_feed.mp4'),
-            "RCOM": os.path.join(path, 'rcom.csv'),
-            "NCOM": os.path.join(path, 'ncom.csv'),
+            "DAQ": os.path.join(path, 'daq.csv') if "DAQ" in self.recorders else "",
+            "CAMERA": os.path.join(path, 'camera_feed.mp4') if "CAMERA" in self.recorders else "",
+            "RCOM": os.path.join(path, 'rcom.csv') if "RCOM" in self.recorders else "",
+            "NCOM": os.path.join(path, 'ncom.csv') if "NCOM" in self.recorders else "",
             "config": self.config.configs
         }
         self.metafile = os.path.join(path, 'metadata.json')
@@ -134,6 +134,8 @@ class Core:
                 result = self.recorders[key]['converter'](self.metadata[key], self.config)
                 if result["status"] == "success":
                     self.logger.logger.info(result["message"])
+                    for msg in result["more"]:
+                        self.logger.logger.debug(msg)
                 else:
                     self.logger.logger.error(result["message"])
 

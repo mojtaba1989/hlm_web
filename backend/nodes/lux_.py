@@ -49,7 +49,7 @@ def DAQ_bin_to_csv(file_name=None, config=None):
         header=header,
         comments=""
     )
-    return {"status": "success", "message": "Conversion complete", "info": [
+    return {"status": "success", "message": "Conversion complete", "more": [
         f"DAQ BIN to CSV: Conversion complete {file_name}",
         f"DAQ BIN to CSV: processing time: {time.time()-tic:.3f}s",
         f"DAQ BIN to CSV: binary file size: {get_size(bin_file_name)}",
@@ -66,7 +66,7 @@ class lux_streamer:
         self.PORT = self.config.get('DAQ.PORT')
         self.daq_format = '<128d'
         self.size = struct.calcsize(self.daq_format) + 4
-        self.info("DAQ Stream: Node initialized")
+        self.info(f"DAQ Stream: Node initialized {self.IP}:{self.PORT}")
 
     def set_logger(self, logger):
         def _noop(*args, **kwargs):

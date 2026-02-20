@@ -96,6 +96,8 @@ def change_ip(connection_name, ip, dhcp):
         return {"status": "error", "message": e.stderr.strip()}
 
 def device_status(dev):
+    if not dev:
+        return {"status": "error", "message": "Device not specified"}
     if dev == "all":
         return {"status": "success", "device_state": "connected", "connection": "", "ip_address": ""}
     try:

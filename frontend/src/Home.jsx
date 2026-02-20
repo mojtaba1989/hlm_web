@@ -5,6 +5,7 @@ import { homeStyles } from "./styles/home_style";
 import WebcamView from "./components/CameraFeed";
 import LuxSensors from "./components/LuxSensors";
 import LoggerFeed from "./components/LoggerFeed";
+import TestCatalog from "./components/TestCatalog";
 
 export default function HomePage() {
     const [streaming, setStreaming] = useState(false);
@@ -43,13 +44,6 @@ export default function HomePage() {
             console.error("Streaming toggle failed:", err);
         }
     };
-
-    useEffect(() => {
-        fetch(`${backendUrl}/api/test_catalog`, { method: "GET" }).
-        then(res => res.json()).
-        then(data => setTestCatalog(data.scenarios)).
-        catch(err => console.error("Failed to fetch test catalog:", err));
-    }, []);
 
     return(
         <div style={homeStyles.page}>
@@ -93,21 +87,7 @@ export default function HomePage() {
               {/* TOP RIGHT: Test Config Placeholder */}
               <section style={{ ...homeStyles.panel, gridArea: "test" }}>
                 <div style={homeStyles.panelHeader}>Test Configuration</div>
-                <p style={{ fontWeight: 'bold', color: '#888' }}>Test Catalog</p>
-                <select 
-                    onChange={(e) => console.log(e.target.value)} 
-                    style={{ padding: '8px', borderRadius: '4px' }}
-                    >
-                    <option value="">Select a test...</option>
-                    {Array.isArray(testCatalog) && testCatalog.map((desc, index) => (
-                        <option key={index} value={desc}>
-                        {desc}
-                        </option>
-                    ))}
-                </select>
-                <div style={{ ...homeStyles.placeholder, flex: 1, overflowY: 'auto' }}>
-                    
-                </div>
+                <TestCatalog />
               </section>
 
               {/* BOTTOM LEFT: Sensors */}

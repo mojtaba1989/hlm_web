@@ -118,6 +118,23 @@ function TextInput({ value, disabled, onChange }) {
   );
 }
 
+function LogLevelSelect({ value, disabled, onChange }) {
+  const levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
+  return (
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      style={configStyles.select}
+      title="Select log level (DEBUG < INFO < WARNING < ERROR < CRITICAL)"
+    >
+      {levels.map((lvl) => (
+        <option key={lvl} value={lvl}>{lvl}</option>
+      ))}
+    </select>  
+  );
+}
+
 function CameraInput({ value, disabled, onChange }) {
   const [isScanning, setIsScanning] = useState(false);
   const [cameras, setCameras] = useState([]);
@@ -327,6 +344,16 @@ function ConfigField({
   if (field === "INTERFACE") {
     return (
       <NetworkDeviceSelect
+        value={value}
+        disabled={!enabled}
+        onChange={(v) => onUpdate(section, field, v)}
+      />
+    );
+  }
+
+  if (section === "FILE_LOGGER" && field === "LEVEL") {
+    return (
+      <LogLevelSelect
         value={value}
         disabled={!enabled}
         onChange={(v) => onUpdate(section, field, v)}

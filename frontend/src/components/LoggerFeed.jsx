@@ -2,27 +2,29 @@ import { useEffect, useRef, useState } from "react";
 
 // Updated Levels to include DEBUG
 const LEVELS = {
-  DEBUG: 1,
-  INFO: 2,
-  WARN: 3,
-  ERROR: 4,
-  ALL: 0
+  NOTSET: 0,
+  DEBUG: 10,
+  INFO: 20,
+  WARN: 30,
+  ERROR: 40,
+  CRITICAL: 50
 };
 
 function LoggerFeed() {
   const [logs, setLogs] = useState([]);
-  const [minLevel, setMinLevel] = useState(LEVELS.ALL);
+  const [minLevel, setMinLevel] = useState(LEVELS.INFO);
   const bottomRef = useRef(null);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const parseLevel = (line) => {
     const upper = line.toUpperCase();
+    const level = upper.split(" - ")[1];
     // 1. Check for ERROR / FAIL
-    if (upper.includes("ERROR") || upper.includes("FAIL") || upper.includes("CRITICAL")) return LEVELS.ERROR;
+    if (level.includes("ERROR") || level.includes("CRITICAL")) return LEVELS.ERROR;
     // 2. Check for WARNING / WARN
-    if (upper.includes("WARNING") || upper.includes("WARN")) return LEVELS.WARN;
+    if (level.includes("WARNING") || level.includes("WARN")) return LEVELS.WARN;
     // 3. Check for DEBUG
-    if (upper.includes("DEBUG")) return LEVELS.DEBUG;
+    if (level.includes("DEBUG")) return LEVELS.DEBUG;
     // 4. Default to INFO (since most lines are INFO: or - INFO -)
     return LEVELS.INFO;
   };
@@ -66,11 +68,12 @@ function LoggerFeed() {
             onChange={(e) => setMinLevel(Number(e.target.value))}
             style={{ background: "#000", color: "#eee", border: "1px solid #444", fontSize: "11px", borderRadius: "4px" }}
           >
-            <option value={LEVELS.ALL}>ALL</option>
-            <option value={LEVELS.DEBUG}>DEBUG+</option>
-            <option value={LEVELS.INFO}>INFO+</option>
-            <option value={LEVELS.WARN}>WARN+</option>
-            <option value={LEVELS.ERROR}>ERROR ONLY</option>
+            <option value={LEVELS.NOTSET}>NOTSET</option>
+            <option value={LEVELS.DEBUG}>DEBUG</option>
+            <option value={LEVELS.INFO}>INFO</option>
+            <option value={LEVELS.WARN}>WARN</option>
+            <option value={LEVELS.ERROR}>ERROR</option>
+            <option value={LEVELS.CRITICAL}>CRITICAL</option>
           </select>
         </div>
         <button onClick={() => setLogs([])} style={{ background: "transparent", border: "1px solid #444", color: "#555", fontSize: "10px", padding: "2px 8px", cursor: "pointer" }}>

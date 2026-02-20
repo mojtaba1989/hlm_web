@@ -121,8 +121,8 @@ function FolderBrowser() {
           {/* Table Headings */}
           <div style={browserStyles.tableHeader}>
             <div style={{ width: "40px" }}></div>
-            <div style={{ flex: "2" }}>Folder Name</div>
-            <div style={{ flex: "1" }}>Duration</div>
+            <div style={{ flex: "2" }}>Test</div>
+            <div style={{ flex: "1" }}>Result</div>
             <div style={{ width: "150px", textAlign: "right" }}>Actions</div>
           </div>
 
@@ -168,7 +168,7 @@ function FolderBrowser() {
                         </div>
                         
                         <div style={{ flex: "1", color: "#666", fontSize: "13px" }}>
-                          {folder.duration || "--:--"}
+                          {folder.result || "--"}
                         </div>
 
                         <div style={{ width: "150px", display: "flex", gap: "8px", justifyContent: "flex-end" }}>
