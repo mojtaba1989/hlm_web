@@ -218,7 +218,7 @@ class OSTXDecoder():
         if len(buffer) != 38:
             return ReturnCode.LenMismatch, {}
         idx = 0
-        Lattitude, idx      = cls.from_bytes(buffer, idx, Type.Double)
+        Latitude, idx      = cls.from_bytes(buffer, idx, Type.Double)
         Longitude, idx      = cls.from_bytes(buffer, idx, Type.Double)
         Altitude, idx       = cls.from_bytes(buffer, idx, Type.Float)
         North_velocity, idx = cls.from_bytes(buffer, idx, Type.Word, scale=1e-4)
@@ -231,7 +231,7 @@ class OSTXDecoder():
             return ReturnCode.BadDecode, {}
         
         return ReturnCode.Success, {
-            'Lattitude[deg]'        : math.degrees(Lattitude),
+            'Latitude[deg]'        : math.degrees(Latitude),
             'Longitude[deg]'        : math.degrees(Longitude),
             'Altitude[m]'           : Altitude,
             'North_velocity[m/s]'   : North_velocity,
@@ -268,22 +268,26 @@ class OSTXDecoder():
 
 # EXAMPLE
 if __name__ == '__main__':
+    filename = r'tests/20260218T024/ncom.bin'
     t_start = time.time()
     data_list = []
-    with open(r'tests/20260218T024/rcom.bin', 'rb') as f:
+    rets = []
+    with open(filename, 'rb') as f:
         while True:
             header = f.read(12)
             if not header:
                 break
             stamp, length = struct.unpack("<QI", header)
             msg = f.read(length)
-            ret, depacked = OSTXDecoder.decode(msg, checksum=True)
+            ret, depacked = OSTXDecoder.decode(msg, checksum=False)
+            rets.append(ret)
             if ret == ReturnCode.Success:
                 depacked['time_nsec'] = stamp
                 data_list.append(depacked)
 
     df = pd.DataFrame(data_list)
-    df.to_csv('RCOM_decoded.csv', index=False)
+    df.to_csv(filename.replace('bin', 'csv'), index=False)
     t_end = time.time()
     print(f"Time: {t_end-t_start}")
     print(df.head())
+    pd.DataFrame(rets).to_csv(filename.replace('bin', 'ret.csv'), index=False)

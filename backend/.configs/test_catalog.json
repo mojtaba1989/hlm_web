@@ -1,55 +1,4 @@
 {
-  "inputs": {
-    "rtk_columns": {
-      "Time (GPS s)": {
-        "primary": "[Tag 0 SN41790 Real-Time]Time (GPS s)",
-        "alternates": []
-      },
-      "Latitude (deg)": {
-        "primary": "[Tag 0 SN41790 Real-Time]Latitude (deg)",
-        "alternates": []
-      },
-      "Longitude (deg)": {
-        "primary": "[Tag 0 SN41790 Real-Time]Longitude (deg)",
-        "alternates": []
-      },
-      "Altitude (m)": {
-        "primary": "[Tag 0 SN41790 Real-Time]Altitude (m)",
-        "alternates": []
-      },
-      "Pitch (deg)": {
-        "primary": "[Tag 0 SN41790 Real-Time]Pitch (deg)",
-        "alternates": []
-      },
-      "Roll (deg)": {
-        "primary": "[Tag 0 SN41790 Real-Time]Roll (deg)",
-        "alternates": []
-      },
-      "Velocity forward": {
-        "primary": "[Tag 0 SN41790 Real-Time]Velocity forward (km/h)",
-        "alternates": [
-          "[Tag 0 SN41790 Real-Time]Velocity forward (m/s)"
-        ]
-      },
-      "Target 1 ISO resultant range (m)": {
-        "primary": "[Tag 1 SN Range]Target 1 ISO resultant range (m)",
-        "alternates": [
-          "[Tag 2 SN Range]Target 1 ISO resultant range (m)"
-        ]
-      }
-    },
-    "lux_channels": {
-      "channels_to_read": [0, 1, 2, 3, 4],
-      "channel_suffixes": {
-        "0": "Mod1_ai0",
-        "1": "Mod1_ai1",
-        "2": "Mod1_ai2",
-        "3": "Mod2_ai0",
-        "4": "Mod2_ai1"
-      },
-      "file_pattern": "(can be deleted if reading directly from lux channels){Lux_File_Name_Without_Ext}_{suffix}.csv" 
-    }
-  },
   "scenario_configs": {
     "1": {
       "description": "Straight road, opposite direction, 60-70 mph",
@@ -64,6 +13,7 @@
       },
       "lux_requirements": {
         "mode_name": "Opposite Direction",
+        "channels": ["ch0", "ch1"],
         "illuminance_distance_intervals": [
           { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
           { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
@@ -85,6 +35,7 @@
       },
       "lux_requirements": {
         "mode_name": "Opposite Direction",
+        "channels": ["ch0", "ch1"],
         "illuminance_distance_intervals": [
           { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
           { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
@@ -106,6 +57,7 @@
       },
       "lux_requirements": {
         "mode_name": "Opposite Direction",
+        "channels": ["ch0", "ch1"],
         "illuminance_distance_intervals": [
           { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
           { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
@@ -127,6 +79,7 @@
       },
       "lux_requirements": {
         "mode_name": "Opposite Direction",
+        "channels": ["ch0", "ch1"],
         "illuminance_distance_intervals": [
           { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
           { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
@@ -148,6 +101,7 @@
       },
       "lux_requirements": {
         "mode_name": "Opposite Direction",
+        "channels": ["ch0", "ch1"],
         "illuminance_distance_intervals": [
           { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
           { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
@@ -169,6 +123,7 @@
       },
       "lux_requirements": {
         "mode_name": "Opposite Direction",
+        "channels": ["ch0", "ch1"],
         "illuminance_distance_intervals": [
           { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 3.1, "max_illuminance_lux_plus_20pct": 3.72 },
           { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 1.8, "max_illuminance_lux_plus_20pct": 2.16 },
@@ -190,6 +145,7 @@
       },
       "lux_requirements": {
         "mode_name": "Same Direction",
+        "channels": ["ch0", "ch1"],
         "illuminance_distance_intervals": [
           { "min_distance_m": 15, "max_distance_m": 30, "max_illuminance_lux": 18.9, "max_illuminance_lux_plus_20pct": 22.68 },
           { "min_distance_m": 30, "max_distance_m": 60, "max_illuminance_lux": 18.9, "max_illuminance_lux_plus_20pct": 22.68 },
