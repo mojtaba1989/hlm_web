@@ -443,6 +443,13 @@ class TestPostProcess:
             return PostProcessCode.SCENARIO_NOT_SPECIFIED
         return PostProcessCode.SUCCESS
     
+    def save_meta(self):
+        if not self.meta:
+            return PostProcessCode.MISSING_METADATA_FILE
+        with open(self.root / 'metadata.json', 'w') as f:
+            json.dump(self.meta, f)
+        return PostProcessCode.SUCCESS
+    
     def load_files(self):
         if not self.meta:
             return PostProcessCode.MISSING_METADATA_FILE
@@ -574,13 +581,30 @@ class TestPostProcess:
                 msg = f"Channels {[col for col in channels if tmp[col]>soft_max_]} exceeds the soft max illuminance requirements in range ({range_[0]}, {range_[1]})"
                 raise PostProcessingError(PostProcessCode.TEST_FAILED, msg)
         return result
-            
+    
+    def process(self, root):
+        ret = PostProcessCode.UNKNOWN
+        try:
+            self.load(root)
+            self.clean()
+            self.validate()
+            ret = self.examine()
+        except PostProcessingError as e:
+            ret = e
+        except MissingSignalError as e:
+            ret = e
+        except:
+            pass
+        if self.meta:
+            self.meta['result'] = ret.code.name
+        self.save_meta()
+        return
 
 if __name__ == '__main__':
-    tpp = TestPostProcess()
-    tpp.load("tests/20260218T024")
-    tpp.clean()
-    tpp.validate()
-    tpp.examine()
+    try:
+        raise PostProcessingError(PostProcessCode.TEST_FAILED)
+    except PostProcessingError as e:
+        print(e.code.name)
+        print(isinstance(e.code.name, str))
 
 

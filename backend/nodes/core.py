@@ -10,11 +10,14 @@ from nodes.rt_ import XCOM_converter
 from nodes.file_manager_ import FileManager
 from nodes.logger_ import LoggerManager
 from nodes.config_manager_ import ConfigManager
+from nodes.postprocess_ import TestPostProcess
 
 
 class Core:
     def __init__(self, logger, config):
         self.file_manager = FileManager(logger)
+        self.current_scenario = 'unknown'
+        self.postprocess_enabled = False
         self.config = config
         self.logger = logger
         self.recorders = {}
@@ -95,6 +98,7 @@ class Core:
             "end_time": None,
             "duration": None,
             "recording": current,
+            "scenario_config_number": self.current_scenario,
             "result": "unknown",
             "log": os.path.join(path, 'log'),
             "DAQ": os.path.join(path, 'daq.csv') if "DAQ" in self.recorders else "",
@@ -134,7 +138,7 @@ class Core:
                 result = self.recorders[key]['converter'](self.metadata[key], self.config)
                 if result["status"] == "success":
                     self.logger.logger.info(result["message"])
-                    for msg in result["more"]:
+                    for msg in result.get("more", []):
                         self.logger.logger.debug(msg)
                 else:
                     self.logger.logger.error(result["message"])
@@ -147,6 +151,11 @@ class Core:
         self.logger.logger.info("Core: Recording closed")
         self.logger.logger.info(f"Core: Recording saved to {self.metadata['recording']}")
         self.logger.logger.info(f"Core: Recording duration: {self.metadata['duration']}")
+        
+        if self.postprocess_enabled:
+            self.logger.logger.info("Core: Starting postprocessing")
+            tpp = TestPostProcess()
+            tpp.process(self.file_manager.get_path())
         return True
     
 logger_ = LoggerManager()

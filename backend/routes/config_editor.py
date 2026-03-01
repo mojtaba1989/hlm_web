@@ -72,4 +72,19 @@ def get_test_catalog():
         catalog = json.load(f)
     catalog = catalog.get("scenario_configs", {})
     listed_catalog = [catalog[key]['description'] for key in catalog.keys()]
-    return {"scenarios": sorted(listed_catalog)}
+    return {"scenarios": (listed_catalog)}
+
+@router.post("/set_scenario")
+def set_scenario_(request: Dict):
+    scenario = request.get("scenario")
+    if scenario:
+        core.current_scenario = str(int(scenario)+1)
+    else:
+        core.current_scenario = 'unknown'
+    return {"status": "ok", "scenario": scenario}
+
+@router.post("/postprocess_toggle")
+def postprocess_toggle(request: Dict):
+    enabled = request.get("enabled")
+    core.postprocess_enabled = enabled
+    return {"status": "ok", "enabled": core.postprocess_enabled}
