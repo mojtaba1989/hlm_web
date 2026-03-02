@@ -8,11 +8,11 @@ import cv2
 import os
 
 from nodes.utils import CameraErrorCodes
+from nodes.logger_ import logger_ as logger
+from nodes.config_manager_ import config_ as config
 
 class video_recorder:
-    def __init__(self, logger=None, config=None,):
-        self.set_logger(logger)
-        self.config = config
+    def __init__(self):
         self.proc = None
         self.node = "/home/dev/hlm_web/backend/nodes/build/rec"
         self.frame_id = -1
@@ -24,25 +24,17 @@ class video_recorder:
         self.file_name = None
         self.format = '<IQ'
         self.size = struct.calcsize(self.format)
-        self.info("[NODE-INFO] Video recorder node initialized")
+        logger.logger.info("[NODE-INFO] Video recorder node initialized")
         self.camera_device = None
         self.status = self.get_status()
-
-    def set_logger(self, logger):
-        def _noop(*args, **kwargs):
-            pass
-        base = getattr(logger, "logger", None)
-        self.info = getattr(base, "info", _noop)
-        self.warning = getattr(base, "warning", _noop)
-        self.error = getattr(base, "error", _noop)
 
     def set_file_name(self, file_name):
         self.file_name = file_name.replace(file_name.split(".")[-1], "avi")
 
     def get_status(self):
-        if not self.config.get('CAMERA.ENABLED'):
+        if not config.get('CAMERA.ENABLED'):
             return CameraErrorCodes.CAMERA_DISABLED
-        self.camera_device = None if self.config.get('CAMERA.Device_ID') == "" else self.config.get('CAMERA.Device_ID')
+        self.camera_device = None if config.get('CAMERA.Device_ID') == "" else config.get('CAMERA.Device_ID')
         if self.camera_device is None:
             return CameraErrorCodes.CAMERA_NOT_FOUND
         if not self.check_camera():
@@ -63,13 +55,13 @@ class video_recorder:
     def init_socket(self):
         # TODO: socket recoreder is permanently disabled
         return
-        if not self.config.get('camera.tcp_stream'):
+        if not config.get('camera.tcp_stream'):
             self.warning("TCP-Camera socket not enabled")
             return
         self.info("Initializing TCP-Camera socket")
         context = zmq.Context()
         self.socket = context.socket(zmq.SUB)
-        self.socket.connect(f"tcp://{self.config.get('camera.tcp_ip')}:{self.config.get('camera.tcp_port')}")
+        self.socket.connect(f"tcp://{config.get('camera.tcp_ip')}:{config.get('camera.tcp_port')}")
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
         self.rec_thread = threading.Thread(target=self.loop_, daemon=True)
         self.info("TCP-Camera socket initialized")
@@ -85,31 +77,31 @@ class video_recorder:
     def start(self):
         self.status = self.get_status()
         if self.status != CameraErrorCodes.SUCCESS:
-            self.error(f"Video recorder failed to start: {self.status.name}")
+            logger.logger.error(f"Video recorder failed to start: {self.status.name}")
             return
         
-        self.info("Initializing video recorder")
+        logger.logger.info("Initializing video recorder")
         if self.recording:
-            self.warning("Video recorder already started")
+            logger.logger.warning("Video recorder already started")
             return
         
         if not self.file_name:
-            self.error("Video recorder file name not set")
+            logger.logger.error("Video recorder file name not set")
             return
         
         self.recording = True
-        if self.config.get('camera.tcp_stream'):
+        if config.get('camera.tcp_stream'):
             self.init_socket()
             self.rec_thread.start()
 
         self.proc = subprocess.Popen([self.node, self.file_name, self.camera_device])
         time.sleep(.5)
         if self.proc.poll() is not None:
-            self.error("Video recorder failed to start")
+            logger.logger.error("Video recorder failed to start")
             self.recording = False
             return
         
-        self.info("Video recorder started")
+        logger.logger.info("Video recorder started")
     
     def stop(self):
         if self.status != CameraErrorCodes.SUCCESS:
@@ -118,7 +110,7 @@ class video_recorder:
         if not self.recording:
             return
         
-        self.info("Stopping video recorder")
+        logger.logger.info("Stopping video recorder")
         self.recording = False
         if self.proc:
             self.proc.send_signal(signal.SIGINT)
@@ -131,7 +123,7 @@ class video_recorder:
             self.rec_thread = None
         self.frame_id = -1
         self.frame_unix_time = -1
-        self.info("Video recorder stopped")
+        logger.logger.info("Video recorder stopped")
     
     def get(self):
         with self.lock:

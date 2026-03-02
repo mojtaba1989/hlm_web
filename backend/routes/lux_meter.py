@@ -3,9 +3,7 @@ from fastapi.responses import StreamingResponse
 import time
 import json
 
-from nodes.core import logger_ as logger
-from nodes.core import core_ as core
-from nodes.core import config_ as config
+from nodes.config_manager_ import config_ as config
 from nodes.lux_ import lux_streamer
 from nodes.utils import ErrorCodes
 
@@ -13,13 +11,13 @@ from nodes.utils import ErrorCodes
 
 sensor_running = False
 router = APIRouter()
-lux_streamer = lux_streamer(logger=logger, config=config)
+lux_streamer = lux_streamer()
 
 def sensor_loop():
     global sensor_running, lux_streamer
     while sensor_running:
         yield f"data: {json.dumps(lux_streamer.get())}\n\n"
-        time.sleep(1/core.config.get('DAQ.Streaming_rate'))
+        time.sleep(1/config.get('DAQ.Streaming_rate'))
 
 
 @router.get("/stream")

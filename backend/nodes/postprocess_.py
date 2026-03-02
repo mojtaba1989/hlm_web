@@ -447,7 +447,7 @@ class TestPostProcess:
         if not self.meta:
             return PostProcessCode.MISSING_METADATA_FILE
         with open(self.root / 'metadata.json', 'w') as f:
-            json.dump(self.meta, f)
+            json.dump(self.meta, f, indent=2)
         return PostProcessCode.SUCCESS
     
     def load_files(self):
@@ -601,10 +601,11 @@ class TestPostProcess:
         return
 
 if __name__ == '__main__':
-    try:
-        raise PostProcessingError(PostProcessCode.TEST_FAILED)
-    except PostProcessingError as e:
-        print(e.code.name)
-        print(isinstance(e.code.name, str))
+    import time
+    tpp = TestPostProcess()
+    ts_ = time.time()
+    tpp.process('./tests/20260218T024')
+    print(time.time()-ts_)
+    
 
 

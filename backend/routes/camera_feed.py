@@ -4,8 +4,8 @@ import cv2
 import threading
 import time
 
-from nodes.core import logger_ as logger
-from nodes.core import config_ as config
+from nodes.logger_ import logger_ as logger
+from nodes.config_manager_ import config_ as config
 from nodes.camera_ import list_real_cameras
 
 router = APIRouter()

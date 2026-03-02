@@ -41,3 +41,5 @@ class ConfigManager:
         for key in path.split("."):
             obj = self.get_ignore_case(obj, key)
         return obj[0] if obj else None
+    
+config_ = ConfigManager()

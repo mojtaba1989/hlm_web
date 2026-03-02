@@ -1,6 +1,7 @@
 import sys
 import logging
 import queue
+import redis
 
 LOG_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -19,6 +20,29 @@ class QueueLogHandler(logging.Handler):
         msg = self.format(record)
         self.log_queue.put(msg)
 
+class RedisLogHandler(logging.Handler):
+    def __init__(self, redis_client, key="app_logs_history", channel="log_stream", max_history=100):
+        super().__init__()
+        self.redis = redis_client
+        self.key = key
+        self.channel = channel
+        self.max_history = max_history
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            # 1. Store in a List (for history)
+            # RPUSH adds to the end, LTRIM keeps it from growing forever
+            pipe = self.redis.pipeline()
+            pipe.rpush(self.key, msg)
+            pipe.ltrim(self.key, -self.max_history, -1) 
+            
+            # 2. Broadcast (for live streaming)
+            pipe.publish(self.channel, msg)
+            pipe.execute()
+        except Exception:
+            self.handleError(record)
+
 class LoggerManager:
     def __init__(self):
         self.logger = logging.getLogger("headLightMeter")
@@ -28,6 +52,7 @@ class LoggerManager:
             "queue": QueueLogHandler,
             "console": logging.StreamHandler
         }
+        self.redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
         self.logger.setLevel(logging.INFO)
         self.setup_console_logger()
         self.setup_weblog_logger()
@@ -58,17 +83,18 @@ class LoggerManager:
 
     def setup_weblog_logger(self):
         for handler in self.logger.handlers[:]:
-            if isinstance(handler, QueueLogHandler):
-                self.logger.info("LogManager: old queue logger removed")
+            if isinstance(handler, RedisLogHandler):
+                self.logger.info("LogManager: old RedisLogHandler logger removed")
                 self.logger.removeHandler(handler)
                 handler.close()
                 
-        self.log_queue = queue.Queue()
-        self.queue_handler = QueueLogHandler(self.log_queue)
-        self.queue_handler.setLevel(logging.INFO)
-        self.queue_handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.queue_handler)
-        self.logger.info("LogManager: Queue logger set up")
+        self.logger.handlers = [h for h in self.logger.handlers if not isinstance(h, RedisLogHandler)]
+        self.redis_client.delete("app_logs_history")
+        
+        redis_handler = RedisLogHandler(self.redis_client)
+        redis_handler.setFormatter(self.formatter)
+        self.logger.addHandler(redis_handler)
+        self.logger.info("LogManager: Redis logger set up")
 
     def set_level(self, level, target="all"):
         if target == "all":
@@ -84,4 +110,6 @@ class LoggerManager:
                     if isinstance(handler, instance):
                         handler.setLevel(LOG_LEVELS.get(level.upper(), logging.INFO))
                         return True
-            return False  
+            return False
+
+logger_ = LoggerManager()  

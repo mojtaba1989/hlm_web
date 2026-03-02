@@ -3,6 +3,8 @@ from typing import Dict
 import json
 import time
 
+from nodes.config_manager_ import config_ as config
+from nodes.logger_ import logger_ as logger
 from nodes.core import core_ as core
 from nodes.network_manager_ import *
 
@@ -11,21 +13,21 @@ TEST_CATALOG_PATH = "/home/dev/hlm_web/backend/.configs/test_catalog.json"
 
 @router.get("/default")
 def get_default_config():
-    core.config.load()
-    return core.config.configs
+    config.load()
+    return config.configs
 
 @router.get("/config")
 def get_config():
-    return core.config.configs
+    return config.configs
 
 @router.post("/config")
 def save_config(cfg: Dict):
-    core.config.save(cfg)
+    config.save(cfg)
     return {"status": "ok"}
 
 @router.post("/check_unsaved")
 def check_unsaved(cfg: Dict):
-    return {"unsaved": cfg != core.config.configs}
+    return {"unsaved": cfg != config.configs}
 
 @router.get("/wifi_ssids")
 def get_wifi_ssids():
@@ -86,5 +88,9 @@ def set_scenario_(request: Dict):
 @router.post("/postprocess_toggle")
 def postprocess_toggle(request: Dict):
     enabled = request.get("enabled")
+    if enabled:
+        logger.logger.info("Enabling postprocessing")
+    else:
+        logger.logger.info("Disabling postprocessing")
     core.postprocess_enabled = enabled
     return {"status": "ok", "enabled": core.postprocess_enabled}

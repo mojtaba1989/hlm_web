@@ -4,6 +4,8 @@ import struct
 import time
 
 from nodes.utils import get_size
+from nodes.logger_ import logger_ as logger
+from nodes.config_manager_ import config_ as config
 
 def DAQ_bin_to_csv(file_name=None, config=None):
     if file_name is None:
@@ -58,48 +60,38 @@ def DAQ_bin_to_csv(file_name=None, config=None):
     ]}
 
 class lux_streamer:
-    def __init__(self, logger=None, config=None):
-        self.set_logger(logger)
-        self.config = config
+    def __init__(self):
         self.socket = None
-        self.IP = self.config.get('DAQ.IP/NETMASK').split("/")[0]
-        self.PORT = self.config.get('DAQ.PORT')
+        self.IP = config.get('DAQ.IP/NETMASK').split("/")[0]
+        self.PORT = config.get('DAQ.PORT')
         self.daq_format = '<128d'
         self.size = struct.calcsize(self.daq_format) + 4
-        self.info(f"DAQ Stream: Node initialized {self.IP}:{self.PORT}")
-
-    def set_logger(self, logger):
-        def _noop(*args, **kwargs):
-            pass
-        base = getattr(logger, "logger", None)
-        self.info = getattr(base, "info", _noop)
-        self.warning = getattr(base, "warning", _noop)
-        self.error = getattr(base, "error", _noop)
+        logger.logger.info(f"DAQ Stream: Node initialized {self.IP}:{self.PORT}")
 
     def init_socket(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.IP, self.PORT))
         self.socket.settimeout(1)
-        self.info("DAQ Stream: Socket initialized")
+        logger.logger.info("DAQ Stream: Socket initialized")
 
     def pack_data(self, data=[0]*8):
         tmp = {}
         for i in range(8):
-            if self.config.get(f'DAQ.Channel_map.{i}') != '':
-                tmp[self.config.get(f'DAQ.Channel_map.{i}')] = data[i]
+            if config.get(f'DAQ.Channel_map.{i}') != '':
+                tmp[config.get(f'DAQ.Channel_map.{i}')] = data[i]
         return tmp
 
     def get(self):
         if self.socket is None:
             self.init_socket()
-            self.info("DAQ Stream: Running")
+            logger.logger.info("DAQ Stream: Running")
         try:
             msg = self.socket.recv(2048)
         except socket.timeout:
-            self.warning(f"DAQ Stream: Failed to acquire DAQ data - Please check connection")
+            logger.logger.warning(f"DAQ Stream: Failed to acquire DAQ data - Please check connection")
             return self.pack_data()
         except:
-            self.warning(f"DAQ Stream: Failed to acquire DAQ data - Please check connection")
+            logger.logger.warning(f"DAQ Stream: Failed to acquire DAQ data - Please check connection")
             return self.pack_data()
         msg = self.socket.recv(2048)
         if len(msg) != self.size:
@@ -112,5 +104,5 @@ class lux_streamer:
         if self.socket:
             self.socket.close()
             self.socket = None
-            self.info("DAQ Stream: Stopped") 
+            logger.logger.info("DAQ Stream: Stopped") 
             

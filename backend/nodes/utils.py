@@ -7,8 +7,7 @@ import struct
 import time
 import os
 from enum import IntEnum
-import subprocess
-
+from nodes.logger_ import logger_ as logger
 class ErrorCodes(IntEnum):
     SUCCESS = 0
     ADDRESS_ALREADY_IN_USE = 1
@@ -36,9 +35,6 @@ def try_except(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logger = None
-            if args and hasattr(args[0], "logger"):
-                logger = args[0].logger
             if logger:
                 logger.logger.error(
                     f"Exception in {func.__qualname__}: {e}"
@@ -49,17 +45,7 @@ def try_except(func):
 def safe_call(method, *args, label=None, default=None, **kwargs):
     try:
         return method(*args, **kwargs)
-    except Exception:
-        self = getattr(method, "__self__", None)
-
-        logger = (
-            getattr(self, "logger", None)
-            if self is not None
-            else None
-        ) or None
-        if logger is None:
-            return default
-        
+    except Exception:        
         frame = inspect.currentframe().f_back
         caller_func = frame.f_code.co_name
         caller_file = frame.f_code.co_filename
@@ -108,11 +94,9 @@ class socket_recorder:
             host,
             port,
             name,
-            logger=None,
             max_failed=-1,
             packet_size=-1,
         ):
-        self.set_logger(logger)
         self.name = name
         self.host = host.split("/")[0]
         self.port = port
@@ -150,29 +134,21 @@ class socket_recorder:
         socket_temp.close()
         return ErrorCodes.RECEVEIVED_INVALID_DATA
 
-    def set_logger(self, logger):
-        def _noop(*args, **kwargs):
-            pass
-        base = getattr(logger, "logger", None)
-        self.info = getattr(base, "info", _noop)
-        self.warning = getattr(base, "warning", _noop)
-        self.error = getattr(base, "error", _noop)
-
     @try_except
     def init_socket(self, timeout=1):
-        self.info(f"Initializing {self.name} socket")
+        logger.logger.info(f"Initializing {self.name} socket")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
         self.socket.settimeout(timeout)
-        self.info(f"{self.name} socket initialized at {self.host}:{self.port}")
+        logger.logger.info(f"{self.name} socket initialized at {self.host}:{self.port}")
         return True
 
     def loop(self):
         if not self.file_name:
-            self.error(f"File name not set for {self.name} recorder")
+            logger.logger.error(f"File name not set for {self.name} recorder")
             return
         if not self.socket:
-            self.error(f"Socket not initialized for {self.name} recorder")
+            logger.logger.error(f"Socket not initialized for {self.name} recorder")
             return
         with open(self.file_name, "wb") as f:
             while self.running:
@@ -180,10 +156,10 @@ class socket_recorder:
                     msg, addr = self.socket.recvfrom(65535)
                 except socket.timeout:
                     if self.flc.is_failed():
-                        self.error(f"{self.name}: Maximum attempts reached - Closing socket")
+                        logger.logger.error(f"{self.name}: Maximum attempts reached - Closing socket")
                         return
                     self.flc.increment()
-                    self.warning(f"{self.name}: Attempt - Failed to get data")
+                    logger.logger.warning(f"{self.name}: Attempt - Failed to get data")
                     continue
                 if self.packet_size !=-1 and len(msg) != self.size:
                     continue
@@ -195,11 +171,11 @@ class socket_recorder:
     def start(self):
         self.running = True
         if not self.init_socket():
-            self.error(f"Failed to initialize {self.name}-{(self.host, self.port)} socket")
+            logger.logger.error(f"Failed to initialize {self.name}-{(self.host, self.port)} socket")
             return
         self.thread = threading.Thread(target=self.loop)
         self.thread.start()
-        self.info(f"{self.name} recorder initialized")
+        logger.logger.info(f"{self.name} recorder initialized")
 
     def stop(self):
         self.running = False
@@ -209,4 +185,4 @@ class socket_recorder:
         if self.socket:
             self.socket.close()
             self.socket = None
-        self.info(f"{self.name} recorder stopped")
+        logger.logger.info(f"{self.name} recorder stopped")

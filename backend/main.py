@@ -9,7 +9,7 @@ from routes import recorder
 from routes import logger_view
 from routes import records_browser
 from routes import config_editor
-from nodes.core import core_ as core
+
 
 
 
