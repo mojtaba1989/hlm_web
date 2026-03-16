@@ -88,9 +88,5 @@ def set_scenario_(request: Dict):
 @router.post("/postprocess_toggle")
 def postprocess_toggle(request: Dict):
     enabled = request.get("enabled")
-    if enabled:
-        logger.logger.info("Enabling postprocessing")
-    else:
-        logger.logger.info("Disabling postprocessing")
     core.postprocess_enabled = enabled
     return {"status": "ok", "enabled": core.postprocess_enabled}

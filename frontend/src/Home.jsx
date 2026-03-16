@@ -50,7 +50,7 @@ export default function HomePage() {
             {/* Header / Top Control Bar */}
             <header style={homeStyles.header}>
                 <div style={homeStyles.brand}>
-                <h2 style={{ margin: 0, fontSize: "1.2rem" }}>Head Light Control Suite</h2>
+                <h2 style={{ margin: 0, fontSize: "1.2rem" }}>Head Light Meter Control Suite</h2>
                 <span style={homeStyles.liveIndicator(streaming)}>
                     {streaming ? "● LIVE" : "○ OFFLINE"}
                 </span>

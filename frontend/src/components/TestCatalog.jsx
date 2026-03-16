@@ -5,7 +5,7 @@ function TestCatalog() {
   const [testCatalog, setTestCatalog] = useState([]);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [test, setTest] = useState("");
-  const [autoEnabled, setAutoEnabled] = useState(false);
+  const [autoEnabled, setAutoEnabled] = useState(true);
 
   useEffect(() => {
     fetch(`${backendUrl}/api/test_catalog`, { method: "GET" }).
@@ -50,10 +50,11 @@ function TestCatalog() {
         </p>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <p style={{ fontWeight: 'bold', color: '#888', margin: 0 }}>
-            Auto Post?Process?
+            Auto Post-Process?
           </p>
           <input 
-            type="checkbox" 
+            type="checkbox"
+            checked={autoEnabled}
             onChange={(e) => setAutoEnabled(e.target.checked)} 
             style={{ cursor: 'pointer' }}
             title="Enables post-process after each recording"

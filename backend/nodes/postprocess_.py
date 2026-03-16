@@ -7,6 +7,7 @@ import json
 from scipy.signal import butter, filtfilt
 import utm
 from enum import Enum, auto
+from nodes.logger_ import logger_ as logger
 
 def load_json(path:str|pathlib.Path):
     if not os.path.exists(path):
@@ -32,15 +33,19 @@ class PostProcessCode(Enum):
 
 class MissingSignalError(Exception):
     def __init__(self, column_name, message="Signal column is missing or all NaN"):
+        self.message = message
         self.column_name = column_name
-        self.message = f"{message}: '{self.column_name}'"
-        super().__init__(self.message)
+        self.msg = f"{message}: {column_name}"
+        logger.logger.error(self.msg)
+        super().__init__(self.msg)
 
 class PostProcessingError(Exception):
     def __init__(self, code, message="Post processing failed with code"):
         self.code = code
-        self.message = f"{message}: {self.code.name}"
-        super().__init__(self.message)
+        self.message = message
+        self.msg = f"{message}: {code.name}"
+        logger.logger.error(self.msg)
+        super().__init__(self.msg)
 
 
 class Catalog:
@@ -484,15 +489,18 @@ class TestPostProcess:
         self.rcom = self.rcom.hlm.filter('Target_number', 1)
         self.rcom.hlm.norm2(cols=['Lateral_range[m]', 'Longitudinal_range[m]'], col_name='Range[m]')
         self.rcom.hlm.keep(['Range[m]'])
+        logger.logger.info("RCOM pre-processing done")
 
         # Clean NCOM -> Reindex, get lat/lon, get grade
         self.ncom.hlm.reindex()
         self.ncom.hlm.norm2(['North_velocity[m/s]','East_velocity[m/s]','Down_velocity[m/s]'], 'Velocity[m/s]')
         self.ncom.hlm.from_latlon().hlm.get_grade()
         self.ncom.drop(columns=['Time[s]'], inplace=True)
+        logger.logger.info("NCOM pre-processing done")
 
         # Append RCOM to NCOM
         self.ncom = self.ncom.hlm.add(self.rcom)
+        logger.logger.info("RCOM appended to NCOM")
 
         # Clean DAQ
         self.daq.hlm.reindex()
@@ -500,9 +508,11 @@ class TestPostProcess:
             columns=[col for col in self.daq.columns if col.startswith('Null')], 
             inplace=True)
         self.daq.hlm.fix_lux().hlm.butterworth_filter(cutoff=35, order=3)
+        logger.logger.info("DAQ pre-processing done")
 
         # Append RCOM to DAQ
         self.daq = self.daq.hlm.add(self.rcom)
+        logger.logger.info("RCOM appended to DAQ")
         return PostProcessCode.SUCCESS
     
     def validate(self):
@@ -532,6 +542,8 @@ class TestPostProcess:
         if not all(conditions):
             msg = f"Range requirements not met! Captured: ({tmp.min()}, {tmp.max()}), Required: ({range_[0]}, {range_[1]})/+-1"
             raise PostProcessingError(PostProcessCode.TEST_INVALID, msg)
+        logger.logger.info("Range validation passed")
+        
         
         # Speed validation
         range_ = (Catalog.get('Test Vehicle Speed (mph).min'),
@@ -546,6 +558,7 @@ class TestPostProcess:
         if not all(conditions):
             msg = f"Speed requirements not! Captured: ({tmp.min()}, {tmp.max()}), Required: ({range_[0]}, {range_[1]})"
             raise PostProcessingError(PostProcessCode.TEST_INVALID, msg)
+        logger.logger.info("Speed validation passed")
 
         #Radius of curvature validation
         if Catalog.get('Radius of Curve (m.)') != 'Straight':
@@ -559,6 +572,7 @@ class TestPostProcess:
             if not all(conditions):
                 msg = f"Radius of curvature requirements not met! Captured: ({tmp.min()}, {tmp.max()}), Required: ({range_[0]}, {range_[1]})"
                 raise PostProcessingError(PostProcessCode.TEST_INVALID, msg)
+            logger.logger.info("Radius of curvature validation passed")    
         return PostProcessCode.SUCCESS
     
     def examine(self):
@@ -573,9 +587,11 @@ class TestPostProcess:
             tmp = self.daq.hlm.get_in_range(cols=channels, test_range=range_).max()
             conditions = [tmp[col]<=max_ for col in channels]
             if all(conditions):
+                logger.logger.info(f"Channels {[col for col in channels if tmp[col]>max_]} passed the max illuminance requirements in range ({range_[0]}, {range_[1]})")
                 continue
             conditions = [tmp[col]<=soft_max_ for col in channels]
             if all(conditions):
+                logger.logger.info(f"Channels {[col for col in channels if tmp[col]>soft_max_]} passed the soft max illuminance requirements in range ({range_[0]}, {range_[1]})")
                 result = PostProcessCode.TEST_SOFT_PASSED
             else:
                 msg = f"Channels {[col for col in channels if tmp[col]>soft_max_]} exceeds the soft max illuminance requirements in range ({range_[0]}, {range_[1]})"
@@ -584,6 +600,7 @@ class TestPostProcess:
     
     def process(self, root):
         ret = PostProcessCode.UNKNOWN
+        logger.logger.info(f"Post processing {root}")
         try:
             self.load(root)
             self.clean()
