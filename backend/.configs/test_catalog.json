@@ -31,7 +31,7 @@
         "Radius of Curve (m.)": { "min": 85, "max": 115 },
         "Curve Direction": "Left",
         "Superelevation (%)": { "min": 0, "max": 2 },
-        "Measurement Distance Range (m)": { "min": 15, "max": 60 }
+        "Measurement Distance Range (m)": { "min": 15, "max": 220 }
       },
       "lux_requirements": {
         "mode_name": "Opposite Direction",

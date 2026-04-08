@@ -7,7 +7,19 @@ import json
 from scipy.signal import butter, filtfilt
 import utm
 from enum import Enum, auto
-from nodes.logger_ import logger_ as logger
+try:
+    from nodes.logger_ import logger_ as logger
+except:
+    class logger_:
+        def __getattr__(self, name):
+            return self
+            
+        def __call__(self, *args, **kwargs):
+            return self
+
+    logger = logger_()
+
+SAVE_CSV = True
 
 def load_json(path:str|pathlib.Path):
     if not os.path.exists(path):
@@ -524,6 +536,11 @@ class TestPostProcess:
         
         self.ncom.hlm.get_valid_range(valid_range=range_)
         self.daq.hlm.get_valid_range(valid_range=range_)
+
+        if SAVE_CSV:
+            os.makedirs(self.root / 'result', exist_ok=True)
+            self.ncom.to_csv(self.root / 'result' / 'ncom_processed.csv')
+            self.daq.to_csv(self.root / 'result' / 'daq_processed.csv')
         
         tmp = self.ncom.hlm.get_in_range(cols=['Range[m]'])
         conditions = [
