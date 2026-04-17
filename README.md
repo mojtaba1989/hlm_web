@@ -63,6 +63,14 @@ sudo apt install cmake
 **Note**: Manually adding the virtual environment to the bash profile is not required if source cmd is added to the .bashrc file. Check this with `source ~/.bashrc`.
 5. Install dependencies: `pip install -r requirements.txt`
 
+## 8. Setup Redis Logger
+1. **Install Redis Server** (System-level):
+   The logger requires a running Redis instance. Install and start it on your host:
+   ```bash
+   # Ubuntu/Debian
+   sudo apt update && sudo apt install redis-server -y
+   sudo systemctl enable --now redis-server
+
 ## 8. Test and Run the Server
 
 1. Connect to your Raspberry Pi via SSH.

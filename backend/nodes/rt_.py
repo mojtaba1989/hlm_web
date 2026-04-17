@@ -21,7 +21,7 @@ def XCOM_converter(file_name, config=None):
             msg = f.read(length)
             ret, unpacked = OSTXDecoder.decode(msg, checksum=True)
             if ret == ReturnCode.Success:
-                depacked['time_nsec'] = stamp
+                unpacked['time_nsec'] = stamp
                 data_list.append(unpacked)
     if not data_list:
         return {"status": "error", "message": f"[{tag}->CSV] No data found - No CSV file created"}

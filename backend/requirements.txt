@@ -5,3 +5,9 @@ python-multipart
 jsonpatch
 zmq
 rt-range
+opencv-python
+matplotlib
+scipy
+redis
+rlog
+utm
