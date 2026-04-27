@@ -4,7 +4,7 @@ import os
 
 class ConfigManager:
     def __init__(self):
-        self.root = "/home/dev/hlm_web/backend/.configs"
+        self.root = ".configs"
         self.configs = {}
         self.default = 'default.cfg'
         self.load('current.cfg')

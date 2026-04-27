@@ -9,7 +9,7 @@ import json
 
 router = APIRouter()
 
-BASE_DIR = Path("/home/dev/DATABASE")  # change this
+BASE_DIR = Path("/DATABASE")  # change this
 
 
 @router.get("/list")

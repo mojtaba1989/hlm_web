@@ -5,10 +5,10 @@ from nodes.logger_ import logger_ as logger
 
 class FileManager:
     def __init__(self, logger=None):
-        self.root = "/home/dev/DATABASE"
+        self.root = "/DATABASE"
         self.today = datetime.datetime.now().strftime("%Y%m%d")
         self.current = None
-        self.symlink = "/home/dev/DATABASE/current"
+        self.symlink = "/DATABASE/current"
         logger.logger.info("[NODE-INFO] File manager node initialized")
         self.check_root()
         self.update_list()

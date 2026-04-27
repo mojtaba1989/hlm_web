@@ -61,7 +61,7 @@ class PostProcessingError(Exception):
 
 
 class Catalog:
-    root = '/home/dev/hlm_web/backend/.configs/test_catalog.json'
+    root = '.configs/test_catalog.json'
     catalog = load_json(root)
     scenario_id = None
     current_scenario = {}

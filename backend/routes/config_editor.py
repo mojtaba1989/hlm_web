@@ -9,7 +9,7 @@ from nodes.core import core_ as core
 from nodes.network_manager_ import *
 
 router = APIRouter()
-TEST_CATALOG_PATH = "/home/dev/hlm_web/backend/.configs/test_catalog.json"
+TEST_CATALOG_PATH = ".configs/test_catalog.json"
 
 @router.get("/default")
 def get_default_config():

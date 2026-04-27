@@ -2,6 +2,7 @@ import sys
 import logging
 import queue
 import redis
+import os
 
 LOG_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -52,7 +53,7 @@ class LoggerManager:
             "queue": QueueLogHandler,
             "console": logging.StreamHandler
         }
-        self.redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        self.redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "redis"), port=6379, decode_responses=True)
         self.logger.setLevel(logging.INFO)
         self.setup_console_logger()
         self.setup_weblog_logger()
